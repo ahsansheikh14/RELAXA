@@ -1,0 +1,23 @@
+.admin-section-layout {
+  min-height: 100vh;
+  display: flex;
+  background: #fbf9f8;
+}
+
+.admin-section-main {
+  flex: 1;
+  padding: 44px;
+}
+
+.admin-section-main h2 {
+  margin: 0;
+  font-size: 40px;
+  color: #1b1c1c;
+  font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+}
+
+.admin-section-main p {
+  margin: 10px 0 0;
+  color: #3f4848;
+  font-size: 18px;
+}

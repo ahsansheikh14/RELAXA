@@ -1,0 +1,396 @@
+.admin-dashboard {
+  min-height: 100vh;
+  display: flex;
+  background: #fbf9f8;
+  color: #1b1c1c;
+}
+
+.admin-sidebar {
+  width: 288px;
+  border-right: 1px solid #ecefef;
+  background: #faf9f8;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-sidebar-head {
+  padding: 0 10px;
+  margin-bottom: 28px;
+}
+
+.admin-sidebar-head h1 {
+  margin: 0;
+  font-size: 24px;
+  font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+  color: #0c5252;
+}
+
+.admin-sidebar-head p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #707978;
+}
+
+.admin-nav {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-nav-item {
+  border: none;
+  background: transparent;
+  padding: 12px 14px;
+  border-radius: 0;
+  border-right: 4px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #a09c99;
+  cursor: pointer;
+  text-align: left;
+}
+
+.admin-nav-item.active {
+  color: #0c5252;
+  background: rgba(201, 230, 215, 0.35);
+  border-right-color: #0c5252;
+}
+
+.admin-logout {
+  margin-top: auto;
+  border: none;
+  background: transparent;
+  border-top: 1px solid #ecefef;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #a09c99;
+  cursor: pointer;
+}
+
+.admin-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 34px 46px;
+}
+
+.admin-main-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.admin-main-head h2 {
+  margin: 0;
+  font-size: 48px;
+  color: #1b1c1c;
+  font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+}
+
+.admin-main-head p {
+  margin: 10px 0 0;
+  color: #3f4848;
+}
+
+.add-exercise-btn {
+  border: none;
+  border-radius: 999px;
+  background: #0c5252;
+  color: #ffffff;
+  height: 46px;
+  padding: 0 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.admin-stat-card {
+  border-radius: 12px;
+  background: #f5f3f3;
+  border: 1px solid rgba(191, 200, 200, 0.3);
+  padding: 26px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px -15px rgba(45, 106, 106, 0.1);
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.card-head > span {
+  font-size: 12px;
+  color: #3f4848;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: #c9e6d7;
+  color: #4a6458;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-circle.alt {
+  background: #b1eeed;
+  color: #0c5252;
+}
+
+.admin-stat-card h3 {
+  margin: 0;
+  font-size: 48px;
+  color: #0c5252;
+  font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+}
+
+.admin-stat-card p {
+  margin: 8px 0 0;
+  color: #707978;
+}
+
+.trend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.trend .material-symbols-outlined,
+.trend strong {
+  color: #0c8c63;
+}
+
+.admin-stat-card.health {
+  background: #2d6a6a;
+  color: #ffffff;
+  border-color: rgba(12, 82, 82, 0.3);
+}
+
+.admin-stat-card.health .card-head > span,
+.admin-stat-card.health h3 {
+  color: #ffffff;
+}
+
+.health-icon {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.health-track {
+  margin-top: 12px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.health-track span {
+  display: block;
+  width: 99.9%;
+  height: 100%;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.admin-table-card {
+  border-radius: 12px;
+  border: 1px solid #ecefef;
+  background: #ffffff;
+  box-shadow: 0 4px 24px rgba(45, 106, 106, 0.05);
+  overflow: hidden;
+}
+
+.table-head {
+  padding: 20px 26px;
+  border-bottom: 1px solid #ecefef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.table-head h3 {
+  margin: 0;
+  font-size: 28px;
+  font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+}
+
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-box {
+  position: relative;
+}
+
+.search-box .material-symbols-outlined {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #a09c99;
+  font-size: 18px;
+}
+
+.search-box input {
+  width: 240px;
+  border: none;
+  border-radius: 999px;
+  background: #efeded;
+  padding: 10px 12px 10px 36px;
+  font: inherit;
+  outline: none;
+}
+
+.filter-btn {
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #707978;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-wrap th {
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 12px;
+  color: #3f4848;
+  padding: 14px 26px;
+  background: rgba(245, 243, 243, 0.6);
+  border-bottom: 1px solid #ecefef;
+}
+
+.table-wrap th:last-child {
+  text-align: right;
+}
+
+.table-wrap td {
+  padding: 16px 26px;
+  border-bottom: 1px solid #ecefef;
+  color: #3f4848;
+}
+
+.table-wrap tr:last-child td {
+  border-bottom: none;
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-cell img {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.user-cell strong {
+  display: block;
+  color: #1b1c1c;
+}
+
+.user-cell small {
+  color: #707978;
+}
+
+.status-pill {
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 10px;
+}
+
+.status-pill.active {
+  background: #c9e6d7;
+  color: #4e685c;
+}
+
+.status-pill.away {
+  background: #efeded;
+  color: #707978;
+}
+
+.action-cell {
+  text-align: right;
+}
+
+.action-cell button {
+  border: none;
+  background: transparent;
+  color: #a09c99;
+  cursor: pointer;
+}
+
+.table-footer {
+  padding: 12px 26px;
+  border-top: 1px solid #ecefef;
+  background: rgba(245, 243, 243, 0.6);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.table-footer span {
+  font-size: 12px;
+  color: #707978;
+}
+
+.table-pager {
+  display: flex;
+  gap: 6px;
+}
+
+.table-pager button {
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: #707978;
+  cursor: pointer;
+}
+
+.table-pager button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}

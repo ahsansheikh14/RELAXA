@@ -1,0 +1,90 @@
+.user-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: 64px;
+  border-bottom: 1px solid #e6ebeb;
+  background: rgba(251, 249, 248, 0.88);
+  backdrop-filter: blur(8px);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.user-navbar__left {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.user-navbar__brand {
+  text-decoration: none;
+  color: #0c5252;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.user-navbar__links {
+  display: flex;
+  gap: 22px;
+}
+
+.user-navbar__link {
+  text-decoration: none;
+  font-size: 14px;
+  color: #7a8383;
+  font-weight: 500;
+  padding: 6px 2px 8px;
+  border-bottom: 2px solid transparent;
+}
+
+.user-navbar__link.active {
+  color: #0c5252;
+  border-bottom-color: #0f6768;
+}
+
+.user-navbar__icons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  border: none;
+  background: transparent;
+  color: #6f7778;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.avatar-image {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 2px solid rgba(191, 200, 200, 0.45);
+  object-fit: cover;
+}
+
+@media (max-width: 800px) {
+  .user-navbar {
+    padding: 0 16px;
+  }
+
+  .user-navbar__left {
+    gap: 16px;
+  }
+
+  .user-navbar__links {
+    gap: 12px;
+  }
+}
