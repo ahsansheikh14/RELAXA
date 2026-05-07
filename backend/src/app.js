@@ -7,6 +7,7 @@ import exerciseRoutes from './routes/exercise.routes.js';
 import reportRoutes from './routes/report.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import v1Routes from './routes/v1.routes.js';
 import notFound from './middleware/notFound.middleware.js';
 import errorHandler from './middleware/errorHandler.middleware.js';
 
@@ -19,6 +20,10 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ message: 'Relaxa backend is running.' });
 });
 
+// Preferred (versioned) API base
+app.use('/api/v1', v1Routes);
+
+// Backwards compatible (non-versioned) routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/moods', moodRoutes);
