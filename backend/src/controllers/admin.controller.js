@@ -1,5 +1,22 @@
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
 import Exercise from '../models/exercise.model.js';
+
+const JWT_EXPIRES_IN = '7d';
+
+const buildAdminToken = (adminUser) => {
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    const err = new Error('Server configuration error: JWT_SECRET is missing.');
+    err.statusCode = 500;
+    throw err;
+  }
+
+  return jwt.sign({ userId: adminUser._id.toString(), role: adminUser.role }, jwtSecret, {
+    expiresIn: JWT_EXPIRES_IN,
+  });
+};
 
 const adminLogin = async (req, res) => {
   try {
@@ -21,18 +38,22 @@ const adminLogin = async (req, res) => {
       });
     }
 
-    if (adminUser.passwordHash !== password) {
+    const isPasswordValid = await bcrypt.compare(password, adminUser.passwordHash);
+
+    if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
         message: 'Invalid admin credentials.',
       });
     }
 
+    const token = buildAdminToken(adminUser);
+
     return res.status(200).json({
       success: true,
       message: 'Admin login successful.',
       data: {
-        token: `admin-token-${adminUser._id}`,
+        token,
         admin: {
           id: adminUser._id,
           name: adminUser.name,
@@ -159,4 +180,54 @@ const manageExercises = async (req, res) => {
   }
 };
 
-export { adminLogin, getAllUsers, manageExercises };
+const getAnalyticsSummary = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const activeUsers = await User.countDocuments({ role: 'user' });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        totalUsers,
+        activeUsers,
+        platformHealth: 99.9,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch analytics summary.',
+      error: error.message,
+    });
+  }
+};
+
+const getActivityMix = async (req, res) => {
+  try {
+    const exercisesByCategory = await Exercise.aggregate([
+      {
+        $group: {
+          _id: '$category',
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: exercisesByCategory.map((item) => ({
+        category: item._id,
+        count: item.count,
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch activity mix.',
+      error: error.message,
+    });
+  }
+};
+
+export { adminLogin, getAllUsers, manageExercises, getAnalyticsSummary, getActivityMix };

@@ -4,6 +4,7 @@ import DashboardPage from '../pages/user/DashboardPage';
 import ExercisesPage from '../pages/user/ExercisesPage';
 import ReportsPage from '../pages/user/ReportsPage';
 import ChatPage from '../pages/user/ChatPage';
+import ResetPasswordPage from '../pages/user/ResetPasswordPage';
 import AdminLoginPage from '../pages/admin/AdminLoginPage';
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import AdminContentPage from '../pages/admin/AdminContentPage';
@@ -20,6 +21,7 @@ function AppRouter() {
       <Route path="/exercises" element={<ExercisesPage />} />
       <Route path="/reports" element={<ReportsPage />} />
       <Route path="/chat" element={<ChatPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/admin/dashboard" element={<AdminDashboardPage />} />

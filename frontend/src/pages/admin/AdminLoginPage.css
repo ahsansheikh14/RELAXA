@@ -132,6 +132,18 @@
   cursor: pointer;
 }
 
+.admin-login-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.admin-auth-error {
+  margin: 0;
+  color: #ba1a1a;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .secure-session {
   margin-top: 22px;
   padding-top: 22px;

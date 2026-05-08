@@ -1,7 +1,10 @@
 import UserNavbar from '../../components/UserNavbar';
 import './ExercisesPage.css';
+import { useNavigate } from 'react-router-dom';
+import { toggleZenMode } from '../../utils/zenMode.js';
 
 function ExercisesPage() {
+  const navigate = useNavigate();
   const exerciseCards = [
     {
       title: 'Work Stress',
@@ -45,7 +48,7 @@ function ExercisesPage() {
             </div>
           </div>
 
-          <button type="button" className="side-btn active">
+          <button type="button" className="side-btn active" onClick={() => navigate('/chat')}>
             <span className="material-symbols-outlined">add_comment</span>
             New Chat
           </button>
@@ -86,7 +89,7 @@ function ExercisesPage() {
                   </div>
                   <h2>{card.title}</h2>
                   <p>{card.description}</p>
-                  <button type="button">
+                  <button type="button" onClick={() => navigate('/chat')}>
                     Begin Session
                     <span className="material-symbols-outlined">arrow_forward</span>
                   </button>
@@ -102,7 +105,7 @@ function ExercisesPage() {
                 Our latest AI-driven breathing assistant syncs with your heart rate to provide personalized pacing for
                 every session.
               </p>
-              <button type="button">Explore Zen Mode</button>
+              <button type="button" onClick={toggleZenMode}>Explore Zen Mode</button>
             </div>
 
             <div className="integration-visual">
@@ -114,7 +117,7 @@ function ExercisesPage() {
         </main>
       </div>
 
-      <button className="exercise-zen-toggle" type="button">
+      <button className="exercise-zen-toggle" type="button" onClick={toggleZenMode}>
         <span className="material-symbols-outlined">filter_vintage</span>
         <span>Zen Mode</span>
       </button>

@@ -1,8 +1,103 @@
  import './LoginPage.css';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL, setUserToken } from '../../utils/auth.js';
 
 function LoginPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('login');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const resetAuthForm = () => {
+    setFormData({ name: '', email: '', password: '' });
+    setErrorMessage('');
+    setInfoMessage('');
+    setShowPassword(false);
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    resetAuthForm();
+  };
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAuthSubmit = async () => {
+    setErrorMessage('');
+    setInfoMessage('');
+    setIsSubmitting(true);
+
+    const endpoint = activeTab === 'signup' ? '/api/v1/auth/register' : '/api/v1/auth/login';
+    const payload =
+      activeTab === 'signup'
+        ? { name: formData.name.trim(), email: formData.email.trim(), password: formData.password }
+        : { email: formData.email.trim(), password: formData.password };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (activeTab === 'login' && result.message === 'Invalid email or password.') {
+          throw new Error('Email/password mismatch. Use Forgot? to reset this email password.');
+        }
+        throw new Error(result.message || 'Authentication failed.');
+      }
+
+      if (result.token) {
+        setUserToken(result.token);
+      }
+      if (result.user?.name) {
+        localStorage.setItem('relaxaUserName', result.user.name);
+      }
+
+      navigate('/dashboard');
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    setErrorMessage('');
+    setInfoMessage('');
+    if (!formData.email.trim()) {
+      setErrorMessage('Please enter your email first.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email.trim() }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || 'Unable to process forgot password.');
+      }
+      setInfoMessage('Reset link sent. Check your email inbox.');
+    } catch (error) { 
+      setErrorMessage(error.message);
+    }
+  };
 
   return (
     <section className="login-page">
@@ -20,19 +115,39 @@ function LoginPage() {
             <div className="auth-tabs">
               <button
                 className={`tab ${activeTab === 'login' ? 'active' : ''}`}
-                onClick={() => setActiveTab('login')}
+                onClick={() => handleTabChange('login')}
                 type="button"
               >
                 Login
               </button>
               <button
                 className={`tab ${activeTab === 'signup' ? 'active' : ''}`}
-                onClick={() => setActiveTab('signup')}
+                onClick={() => handleTabChange('signup')}
                 type="button"
               >
                 Sign Up
               </button>
             </div>
+
+            {activeTab === 'signup' && (
+              <div className="form-group">
+                <label className="form-label" htmlFor="name">
+                  Full Name
+                </label>
+                <div className="input-wrap">
+                  <span className="material-symbols-outlined input-icon">person</span>
+                  <input
+                    id="name"
+                    name="name"
+                    className="form-input"
+                    type="text"
+                    placeholder="Your full name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="form-group">
               <label className="form-label" htmlFor="email">
@@ -42,9 +157,12 @@ function LoginPage() {
                 <span className="material-symbols-outlined input-icon">mail</span>
                 <input
                   id="email"
+                  name="email"
                   className="form-input"
                   type="email"
                   placeholder="name@example.com"
+                  value={formData.email}
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
@@ -54,7 +172,7 @@ function LoginPage() {
                 <label className="form-label" htmlFor="password">
                   Password
                 </label>
-                <button className="forgot-link" type="button">
+                <button className="forgot-link" type="button" onClick={handleForgotPassword}>
                   Forgot?
                 </button>
               </div>
@@ -62,39 +180,33 @@ function LoginPage() {
                 <span className="material-symbols-outlined input-icon">lock</span>
                 <input
                   id="password"
+                  name="password"
                   className="form-input"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleInputChange}
                 />
-                <button className="input-trailing" type="button" aria-label="Toggle password visibility">
-                  <span className="material-symbols-outlined">visibility</span>
+                <button
+                  className="input-trailing"
+                  type="button"
+                  aria-label="Toggle password visibility"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  <span className="material-symbols-outlined">
+                    {showPassword ? 'visibility_off' : 'visibility'}
+                  </span>
                 </button>
               </div>
             </div>
 
-            <button className="submit-btn" type="button">
-              Enter Sanctuary
+            {errorMessage && <p className="auth-error">{errorMessage}</p>}
+            {infoMessage && <p className="auth-info">{infoMessage}</p>}
+
+            <button className="submit-btn" type="button" onClick={handleAuthSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Please wait...' : 'Enter Sanctuary'}
             </button>
 
-            <div className="continue-row">
-              <span className="continue-line" />
-              <span>Or continue with</span>
-              <span className="continue-line" />
-            </div>
-
-            <div className="social-row">
-              <button className="social-btn" type="button">
-                <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgSRzyEaRZ0bUuywC4iStQscYKVfxp8jLNXOmUTHEAKp0a8GVw2H3JskUFAiGz7x8VIMOgUKUJB67leOnhw3SDMsH6qhRfcdWUg23v3Y92CGn4zLEcHlFaG9N74QBVVip-o6BEflOgdN9XkaJDdOUUMDAwpKgkBzqjOAlYF80F8pKroxafow3x6io4Tpe9SNNZv0WJo11VJhj3HjLb87xtZAYIEzjnOSCM9OI42vDJ-iSTLimhivjCaaoG_kPMGSOBQzvPstn2yH4W"
-                  alt="Google"
-                />
-                Google
-              </button>
-              <button className="social-btn" type="button">
-                <span className="material-symbols-outlined">ios</span>
-                Apple
-              </button>
-            </div>
           </div>
         </div>
 

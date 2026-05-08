@@ -67,12 +67,177 @@
   font-size: 20px;
 }
 
-.avatar-image {
+.avatar-btn {
+  border: none;
+  background: transparent;
+  color: #315f60;
   width: 32px;
   height: 32px;
-  border-radius: 999px;
-  border: 2px solid rgba(191, 200, 200, 0.45);
-  object-fit: cover;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-btn .material-symbols-outlined {
+  font-size: 26px;
+}
+
+.user-menu-wrap {
+  position: relative;
+}
+
+.user-menu {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e4e2e2;
+  border-radius: 8px;
+  min-width: 120px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.user-menu button {
+  width: 100%;
+  border: none;
+  background: #ffffff;
+  padding: 9px 12px;
+  text-align: left;
+  color: #3f4848;
+  cursor: pointer;
+}
+
+.user-menu button:hover {
+  background: #f5f3f3;
+}
+
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 22, 22, 0.18);
+  z-index: 35;
+}
+
+.settings-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 320px;
+  max-width: 90vw;
+  height: 100vh;
+  background: #ffffff;
+  border-left: 1px solid #e4e2e2;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.08);
+  z-index: 36;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-panel__head {
+  height: 64px;
+  border-bottom: 1px solid #ecefef;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px 0 16px;
+}
+
+.settings-panel__head h3 {
+  margin: 0;
+  color: #1b1c1c;
+  font-size: 20px;
+}
+
+.settings-panel__head button {
+  border: none;
+  background: transparent;
+  color: #5f6969;
+  cursor: pointer;
+}
+
+.settings-panel__section {
+  padding: 14px 14px 8px;
+}
+
+.settings-label {
+  margin: 0 0 8px;
+  color: #8a9191;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.settings-panel__section button,
+.settings-panel__footer button {
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #344b4c;
+  cursor: pointer;
+  text-align: left;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.settings-panel__section button:hover,
+.settings-panel__footer button:hover {
+  background: #f5f3f3;
+}
+
+.settings-panel__footer {
+  margin-top: auto;
+  padding: 10px 14px 14px;
+  border-top: 1px solid #ecefef;
+}
+
+.settings-panel__footer .danger {
+  color: #b3261e;
+}
+
+.change-password-form {
+  margin: 8px 0 6px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f8fafa;
+  border: 1px solid #e5ecec;
+  display: grid;
+  gap: 8px;
+}
+
+.change-password-form input {
+  height: 38px;
+  border: 1px solid #d9e2e2;
+  border-radius: 8px;
+  padding: 0 10px;
+  font: inherit;
+}
+
+.save-password-btn {
+  background: #0c5252 !important;
+  color: #ffffff !important;
+  justify-content: center;
+}
+
+.settings-error,
+.settings-message {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.settings-error {
+  color: #b3261e;
+}
+
+.settings-message {
+  color: #0c5252;
 }
 
 @media (max-width: 800px) {

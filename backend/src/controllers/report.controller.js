@@ -7,8 +7,8 @@ const getMoodReport = async (req, res) => {
     const fromDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
     const match = { createdAt: { $gte: fromDate } };
-    if (req.user?._id) {
-      match.userId = new mongoose.Types.ObjectId(req.user._id);
+    if (req.user?.userId) {
+      match.userId = new mongoose.Types.ObjectId(req.user.userId);
     }
 
     const trends = await Mood.aggregate([

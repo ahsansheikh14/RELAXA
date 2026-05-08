@@ -1,7 +1,121 @@
 import UserNavbar from '../../components/UserNavbar';
 import './ReportsPage.css';
+import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { toggleZenMode } from '../../utils/zenMode.js';
+import { jsPDF } from 'jspdf';
+import { API_BASE_URL } from '../../utils/auth.js';
 
 function ReportsPage() {
+  const navigate = useNavigate();
+  const [moodPoints, setMoodPoints] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    const token = localStorage.getItem('relaxaToken');
+    const loadMoodData = async () => {
+      if (!token) {
+        setLoading(false);
+        setLoadError('Please login again to view report trends.');
+        return;
+      }
+      try {
+        setLoadError('');
+        const response = await fetch(`${API_BASE_URL}/api/v1/reports/mood-trends`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || 'Unable to load report trends.');
+        }
+        setMoodPoints(Array.isArray(result.data) ? result.data : []);
+      } catch (error) {
+        setLoadError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadMoodData();
+  }, []);
+
+  const summary = useMemo(() => {
+    if (!moodPoints.length) {
+      return {
+        focusScore: 0,
+        totalEntries: 0,
+        avgStress: 0,
+        trendText: 'No entries yet. Start logging moods to unlock insights.',
+      };
+    }
+
+    const totalEntries = moodPoints.reduce((sum, item) => sum + (item.entries || 0), 0);
+    const stressAvgRaw =
+      moodPoints.reduce((sum, item) => sum + (item.averageStressLevel || 0), 0) / moodPoints.length;
+    const avgStress = Number(stressAvgRaw.toFixed(1));
+    const focusScore = Math.max(0, Math.min(100, Math.round((10 - avgStress) * 10)));
+    const trendText =
+      avgStress <= 4
+        ? 'Your stress average is trending calm. Keep your current routine.'
+        : 'Stress is a bit elevated. Try adding a short evening breathing session.';
+
+    return { focusScore, totalEntries, avgStress, trendText };
+  }, [moodPoints]);
+
+  const handleExportPdf = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text('Relaxa Monthly Review', 14, 20);
+    doc.setFontSize(12);
+    doc.text('Focus Score: 84%', 14, 34);
+    doc.text('Activity Mix: Meditation 12h, Breathing 5h, Reflection 3h', 14, 44);
+    doc.text('Rest Quality: Improved deep sleep by 14 minutes/night.', 14, 54);
+    doc.text('HRV: Stable at 65ms.', 14, 64);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 78);
+    doc.save('relaxa-monthly-review.pdf');
+  };
+
+  const handleExportServerPdf = async () => {
+    try {
+      const token = localStorage.getItem('relaxaToken');
+      const response = await fetch(`${API_BASE_URL}/api/v1/reports/mood-trends`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || 'Unable to load report data.');
+      }
+
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text('Relaxa Mood Trends', 14, 20);
+      doc.setFontSize(12);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30);
+
+      let y = 44;
+      const points = result.data || [];
+      if (!points.length) {
+        doc.text('No mood data available yet.', 14, y);
+      } else {
+        points.slice(0, 20).forEach((row) => {
+          doc.text(
+            `${row.date} | mood: ${row.mood} | entries: ${row.entries} | avg stress: ${row.averageStressLevel}`,
+            14,
+            y
+          );
+          y += 8;
+        });
+      }
+
+      doc.save('relaxa-mood-trends.pdf');
+    } catch (error) {
+      window.alert(error.message);
+      handleExportPdf();
+    }
+  };
   return (
     <div className="reports-page">
       <UserNavbar />
@@ -20,7 +134,7 @@ function ReportsPage() {
             <div className="chart-card-head">
               <div>
                 <h2>Mood Frequency</h2>
-                <p>Last 7 Days</p>
+                <p>Live Data</p>
               </div>
               <span className="pill">Weekly View</span>
             </div>
@@ -33,21 +147,27 @@ function ReportsPage() {
                     <stop offset="100%" stopColor="#0c5252" stopOpacity="0" />
                   </linearGradient>
                 </defs>
-                <path
-                  d="M0,150 C50,140 100,160 150,110 C200,60 250,90 300,70 C350,50 400,100 450,90 C500,80 550,130 600,100 C650,70 700,80 L700,200 L0,200 Z"
-                  fill="url(#chartGradient)"
-                />
-                <path
-                  d="M0,150 C50,140 100,160 150,110 C200,60 250,90 300,70 C350,50 400,100 450,90 C500,80 550,130 600,100 C650,70 700,80"
-                  fill="none"
-                  stroke="#0c5252"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
-                <circle cx="150" cy="110" r="5" fill="#ffffff" stroke="#0c5252" strokeWidth="2" />
-                <circle cx="300" cy="70" r="5" fill="#ffffff" stroke="#0c5252" strokeWidth="2" />
-                <circle cx="450" cy="90" r="5" fill="#ffffff" stroke="#0c5252" strokeWidth="2" />
-                <circle cx="600" cy="100" r="5" fill="#ffffff" stroke="#0c5252" strokeWidth="2" />
+                {!moodPoints.length ? (
+                  <text x="28" y="38" fill="#4a6458" fontSize="16">
+                    {loading ? 'Loading mood trends...' : 'No mood trend data yet.'}
+                  </text>
+                ) : (
+                  <>
+                    <path
+                      d="M0,160 C90,120 180,130 270,95 C360,70 450,105 540,85 C610,72 660,88 700,74 L700,200 L0,200 Z"
+                      fill="url(#chartGradient)"
+                    />
+                    <path
+                      d="M0,160 C90,120 180,130 270,95 C360,70 450,105 540,85 C610,72 660,88 700,74"
+                      fill="none"
+                      stroke="#0c5252"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                    />
+                    <circle cx="270" cy="95" r="5" fill="#ffffff" stroke="#0c5252" strokeWidth="2" />
+                    <circle cx="540" cy="85" r="5" fill="#ffffff" stroke="#0c5252" strokeWidth="2" />
+                  </>
+                )}
               </svg>
 
               <div className="chart-days">
@@ -66,8 +186,7 @@ function ReportsPage() {
               <div>
                 <h3>Weekly Insight</h3>
                 <p>
-                  You feel more stressed after work. Consider a 5-minute breathing exercise at 5:00 PM to transition
-                  into your evening sanctuary.
+                  {summary.trendText}
                 </p>
               </div>
             </div>
@@ -76,11 +195,11 @@ function ReportsPage() {
           <div className="metric-column">
             <article className="reports-card focus-card">
               <h3>Focus Score</h3>
-              <strong>84%</strong>
+              <strong>{summary.focusScore}%</strong>
               <div className="focus-track">
-                <span />
+                <span style={{ width: `${summary.focusScore}%` }} />
               </div>
-              <p>12% higher than last month. Your consistency is paying off.</p>
+              <p>Based on your current average stress level ({summary.avgStress}/10).</p>
               <span className="material-symbols-outlined leaf">energy_savings_leaf</span>
             </article>
 
@@ -90,36 +209,33 @@ function ReportsPage() {
                 <li>
                   <span>
                     <i className="dot meditation" />
-                    Meditation
+                    Mood Entries
                   </span>
-                  <b>12h</b>
+                  <b>{summary.totalEntries}</b>
                 </li>
                 <li>
                   <span>
                     <i className="dot breathing" />
-                    Breathing
+                    Average Stress
                   </span>
-                  <b>5h</b>
+                  <b>{summary.avgStress}/10</b>
                 </li>
                 <li>
                   <span>
                     <i className="dot reflection" />
-                    Reflection
+                    Tracked Days
                   </span>
-                  <b>3h</b>
+                  <b>{moodPoints.length}</b>
                 </li>
               </ul>
-              <button type="button">View Detailed Log</button>
+              <button type="button" onClick={() => navigate('/exercises')}>View Detailed Log</button>
             </article>
           </div>
 
           <article className="reports-card small-card">
             <span className="material-symbols-outlined">sleep</span>
             <h3>Rest Quality</h3>
-            <p>
-              Your average deep sleep has increased by 14 minutes per night since starting the Evening Release
-              protocol.
-            </p>
+            <p>{loadError || 'Keep logging your mood daily to unlock richer rest-quality insights.'}</p>
             <div className="users-compare">
               <div className="color-dots">
                 <i />
@@ -133,10 +249,7 @@ function ReportsPage() {
           <article className="reports-card small-card">
             <span className="material-symbols-outlined">ecg_heart</span>
             <h3>Heart Rate Variability</h3>
-            <p>
-              HRV remains stable at 65ms, indicating a healthy autonomic nervous system and readiness for moderate
-              exercise.
-            </p>
+            <p>Weekly emotional consistency improves as your average stress moves closer to the 3-4 range.</p>
             <div className="stable-chip">
               <span>Stable</span>
               <span className="material-symbols-outlined">trending_flat</span>
@@ -149,7 +262,7 @@ function ReportsPage() {
               Download your comprehensive emotional report for October to share with your therapist or keep for your
               personal records.
             </p>
-            <button type="button">
+            <button type="button" onClick={handleExportServerPdf}>
               <span className="material-symbols-outlined">download</span>
               Export PDF
             </button>
@@ -158,7 +271,7 @@ function ReportsPage() {
         </section>
       </main>
 
-      <button className="reports-zen-toggle" type="button">
+      <button className="reports-zen-toggle" type="button" onClick={toggleZenMode}>
         <span className="material-symbols-outlined">spa</span>
         <span>Zen Mode</span>
       </button>

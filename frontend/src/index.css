@@ -11,6 +11,7 @@ body {
   font-family: 'Manrope', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #f8fbfb;
   color: #234041;
+  transition: background-color 0.2s ease, color 0.2s ease, filter 0.2s ease;
 }
 
 #root {
@@ -29,4 +30,28 @@ body {
   white-space: nowrap;
   direction: ltr;
   -webkit-font-smoothing: antialiased;
+}
+
+body.zen-mode {
+  background: #e9f3f1;
+  color: #173133;
+  filter: saturate(0.85);
+}
+
+body.zen-mode .dashboard-page,
+body.zen-mode .exercises-page,
+body.zen-mode .reports-page,
+body.zen-mode .chat-page {
+  background: #edf5f4 !important;
+}
+
+body.zen-mode .user-navbar {
+  background: rgba(232, 243, 241, 0.92) !important;
+}
+
+body.zen-mode .zen-floating-btn,
+body.zen-mode .exercise-zen-toggle,
+body.zen-mode .reports-zen-toggle,
+body.zen-mode .chat-zen-fab {
+  box-shadow: 0 0 0 3px rgba(12, 82, 82, 0.12) !important;
 }

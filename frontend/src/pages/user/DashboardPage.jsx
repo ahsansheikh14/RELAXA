@@ -1,7 +1,13 @@
 import UserNavbar from '../../components/UserNavbar';
 import './DashboardPage.css';
+import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { toggleZenMode } from '../../utils/zenMode.js';
+import { API_BASE_URL } from '../../utils/auth.js';
 
 function DashboardPage() {
+  const navigate = useNavigate();
+  const [userName, setUserName] = useState(localStorage.getItem('relaxaUserName') || 'there');
   const moods = [
     { label: 'Radiant', icon: 'sentiment_very_satisfied' },
     { label: 'Calm', icon: 'sentiment_satisfied' },
@@ -10,12 +16,37 @@ function DashboardPage() {
     { label: 'Overwhelmed', icon: 'sentiment_extremely_dissatisfied' },
   ];
 
+  useEffect(() => {
+    const token = localStorage.getItem('relaxaToken');
+    if (!token) {
+      return;
+    }
+
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const result = await response.json();
+        if (!response.ok || !result.user?.name) {
+          return;
+        }
+        setUserName(result.user.name);
+        localStorage.setItem('relaxaUserName', result.user.name);
+      } catch {
+        // Keep last known name if profile call fails.
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
   return (
     <div className="dashboard-page">
       <UserNavbar />
 
       <main className="dashboard-main">
-        <p className="dashboard-kicker">GOOD MORNING, ELENA</p>
+        <p className="dashboard-kicker">HI {userName.toUpperCase()}</p>
         <h1 className="dashboard-title">
           Finding peace in the <em>present moment.</em>
         </h1>
@@ -52,7 +83,9 @@ function DashboardPage() {
               </div>
               <h3>Ocean Breath Meditation</h3>
               <p>Synchronize your awareness with the rhythmic flow of the sea to dissolve anxiety and tension.</p>
-              <button type="button">Begin Journey</button>
+              <button type="button" onClick={() => navigate('/exercises')}>
+                Begin Journey
+              </button>
             </div>
           </article>
 
@@ -61,7 +94,7 @@ function DashboardPage() {
               <span className="material-symbols-outlined float-icon">auto_awesome</span>
               <h4>Weekly Reflection</h4>
               <p>You've maintained your streak for 5 days. You're doing amazing.</p>
-              <button type="button" className="inline-link">
+              <button type="button" className="inline-link" onClick={() => navigate('/reports')}>
                 View Reports
                 <span className="material-symbols-outlined">arrow_forward</span>
               </button>
@@ -75,7 +108,7 @@ function DashboardPage() {
                 <h4>Daily Gratitude</h4>
                 <p>What is one thing that brought you peace today?</p>
               </div>
-              <button type="button" className="record-btn">
+              <button type="button" className="record-btn" onClick={() => navigate('/chat')}>
                 Record Entry
               </button>
             </article>
@@ -90,7 +123,7 @@ function DashboardPage() {
           </div>
           <h3>Need someone to talk to?</h3>
           <p>Our AI psychologist is available 24/7 to provide a safe space for your thoughts and feelings.</p>
-          <button type="button">
+          <button type="button" onClick={() => navigate('/chat')}>
             Chat with AI Psychologist
             <span className="material-symbols-outlined">bolt</span>
           </button>
@@ -114,7 +147,7 @@ function DashboardPage() {
         </section>
       </main>
 
-      <button className="zen-floating-btn" type="button">
+      <button className="zen-floating-btn" type="button" onClick={toggleZenMode}>
         <span className="material-symbols-outlined">nights_stay</span>
         Zen Mode
       </button>

@@ -1,5 +1,6 @@
 import UserNavbar from '../../components/UserNavbar';
 import './ChatPage.css';
+import { toggleZenMode } from '../../utils/zenMode.js';
 
 function ChatPage() {
   return (
@@ -125,7 +126,7 @@ function ChatPage() {
         </main>
       </div>
 
-      <button className="chat-zen-fab" type="button">
+      <button className="chat-zen-fab" type="button" onClick={toggleZenMode}>
         <span className="material-symbols-outlined">self_improvement</span>
       </button>
     </div>
