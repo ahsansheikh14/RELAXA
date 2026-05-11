@@ -2,6 +2,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
 import Exercise from '../models/exercise.model.js';
+import Mood from '../models/mood.model.js';
+import { ADMIN_BOOTSTRAP } from '../constants/admin.constants.js';
 
 const JWT_EXPIRES_IN = '7d';
 
@@ -16,6 +18,33 @@ const buildAdminToken = (adminUser) => {
   return jwt.sign({ userId: adminUser._id.toString(), role: adminUser.role }, jwtSecret, {
     expiresIn: JWT_EXPIRES_IN,
   });
+};
+
+const sanitizeAdmin = (adminUser) => ({
+  id: adminUser._id,
+  name: adminUser.name,
+  email: adminUser.email,
+  role: adminUser.role,
+});
+
+const sanitizeExercisePayload = (payload) => {
+  const mediaType = ['none', 'link', 'video'].includes(payload.mediaType) ? payload.mediaType : 'none';
+  const mediaUrl = String(payload.mediaUrl || '').trim();
+
+  if (mediaType !== 'none' && !mediaUrl) {
+    const err = new Error('mediaUrl is required when mediaType is link or video.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  return {
+    title: String(payload.title || '').trim(),
+    category: String(payload.category || '').trim(),
+    durationMinutes: Number(payload.durationMinutes),
+    description: String(payload.description || '').trim(),
+    mediaType,
+    mediaUrl: mediaType === 'none' ? '' : mediaUrl,
+  };
 };
 
 const adminLogin = async (req, res) => {
@@ -54,18 +83,63 @@ const adminLogin = async (req, res) => {
       message: 'Admin login successful.',
       data: {
         token,
-        admin: {
-          id: adminUser._id,
-          name: adminUser.name,
-          email: adminUser.email,
-          role: adminUser.role,
-        },
+        admin: sanitizeAdmin(adminUser),
       },
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: 'Failed to log in admin.',
+      error: error.message,
+    });
+  }
+};
+
+const forgotAdminPassword = async (req, res) => {
+  try {
+    const email = String(req.body.email || '')
+      .trim()
+      .toLowerCase();
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Admin email is required.',
+      });
+    }
+
+    if (email !== ADMIN_BOOTSTRAP.email) {
+      return res.status(400).json({
+        success: false,
+        message: `Use the default admin email: ${ADMIN_BOOTSTRAP.email}`,
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(ADMIN_BOOTSTRAP.password, 10);
+    const adminUser = await User.findOneAndUpdate(
+      { email: ADMIN_BOOTSTRAP.email },
+      {
+        name: ADMIN_BOOTSTRAP.name,
+        email: ADMIN_BOOTSTRAP.email,
+        passwordHash,
+        role: 'admin',
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Admin password has been restored to the default hardcoded password.',
+      data: {
+        email: ADMIN_BOOTSTRAP.email,
+        password: ADMIN_BOOTSTRAP.password,
+        admin: sanitizeAdmin(adminUser),
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to restore admin credentials.',
       error: error.message,
     });
   }
@@ -128,7 +202,7 @@ const manageExercises = async (req, res) => {
     }
 
     if (action === 'create') {
-      const exercise = await Exercise.create(payload);
+      const exercise = await Exercise.create(sanitizeExercisePayload(payload));
       return res.status(201).json({
         success: true,
         message: 'Exercise created successfully.',
@@ -144,7 +218,10 @@ const manageExercises = async (req, res) => {
     }
 
     if (action === 'update') {
-      const exercise = await Exercise.findByIdAndUpdate(id, payload, { new: true, runValidators: true });
+      const exercise = await Exercise.findByIdAndUpdate(id, sanitizeExercisePayload(payload), {
+        new: true,
+        runValidators: true,
+      });
       if (!exercise) {
         return res.status(404).json({
           success: false,
@@ -182,14 +259,26 @@ const manageExercises = async (req, res) => {
 
 const getAnalyticsSummary = async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments();
-    const activeUsers = await User.countDocuments({ role: 'user' });
+    const activeCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const [totalUsers, activeUsersAgg, totalExercises, totalMoodEntries] = await Promise.all([
+      User.countDocuments({ role: 'user' }),
+      Mood.aggregate([
+        { $match: { createdAt: { $gte: activeCutoff } } },
+        { $group: { _id: '$userId' } },
+        { $count: 'count' },
+      ]),
+      Exercise.countDocuments(),
+      Mood.countDocuments(),
+    ]);
+    const activeUsers = activeUsersAgg[0]?.count || 0;
 
     return res.status(200).json({
       success: true,
       data: {
         totalUsers,
         activeUsers,
+        totalExercises,
+        totalMoodEntries,
         platformHealth: 99.9,
       },
     });
@@ -230,4 +319,4 @@ const getActivityMix = async (req, res) => {
   }
 };
 
-export { adminLogin, getAllUsers, manageExercises, getAnalyticsSummary, getActivityMix };
+export { adminLogin, forgotAdminPassword, getAllUsers, manageExercises, getAnalyticsSummary, getActivityMix };

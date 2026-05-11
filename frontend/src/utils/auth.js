@@ -6,6 +6,7 @@ const setUserToken = (token) => {
 
 const clearUserSession = () => {
   localStorage.removeItem('relaxaToken');
+  localStorage.removeItem('relaxaUserName');
 };
 
 const setAdminToken = (token) => {

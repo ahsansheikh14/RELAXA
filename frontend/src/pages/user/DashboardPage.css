@@ -79,6 +79,20 @@
   box-shadow: 0 20px 40px -15px rgba(45, 106, 106, 0.12);
 }
 
+.dashboard-feedback {
+  margin: 16px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dashboard-feedback--success {
+  color: #0c5252;
+}
+
+.dashboard-feedback--error {
+  color: #b3261e;
+}
+
 .mood-card > span:last-child {
   font-size: 14px;
   font-weight: 600;

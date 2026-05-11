@@ -112,7 +112,7 @@
 
 .admin-stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 24px;
   margin-bottom: 40px;
 }
@@ -352,6 +352,11 @@
   color: #707978;
 }
 
+.status-pill.admin {
+  background: rgba(12, 82, 82, 0.1);
+  color: #0c5252;
+}
+
 .action-cell {
   text-align: right;
 }
@@ -393,4 +398,29 @@
 .table-pager button:disabled {
   opacity: 0.35;
   cursor: default;
+}
+
+.user-avatar-fallback {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: #c9e6d7;
+  color: #0c5252;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.admin-inline-error {
+  margin: 0;
+  padding: 12px 26px 0;
+  color: #ba1a1a;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-table-empty {
+  text-align: center;
+  color: #707978;
 }

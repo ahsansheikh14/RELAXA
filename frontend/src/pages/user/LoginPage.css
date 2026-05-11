@@ -210,6 +210,15 @@
   font-weight: 600;
 }
 
+.auth-reset-link {
+  display: inline-flex;
+  margin-top: 10px;
+  color: #0c5252;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
 .continue-row {
   margin-top: 28px;
   display: flex;

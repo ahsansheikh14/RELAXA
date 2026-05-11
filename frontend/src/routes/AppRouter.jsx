@@ -10,6 +10,7 @@ import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import AdminContentPage from '../pages/admin/AdminContentPage';
 import AdminAnalyticsPage from '../pages/admin/AdminAnalyticsPage';
 import AdminAddExercisePage from '../pages/admin/AdminAddExercisePage';
+import AdminProtectedRoute from '../components/AdminProtectedRoute';
 
 function AppRouter() {
   return (
@@ -24,10 +25,13 @@ function AppRouter() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       <Route path="/admin/login" element={<AdminLoginPage />} />
-      <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-      <Route path="/admin/content" element={<AdminContentPage />} />
-      <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
-      <Route path="/admin/exercises/new" element={<AdminAddExercisePage />} />
+      <Route element={<AdminProtectedRoute />}>
+        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+        <Route path="/admin/content" element={<AdminContentPage />} />
+        <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+        <Route path="/admin/exercises/new" element={<AdminAddExercisePage />} />
+        <Route path="/admin/exercises/:id/edit" element={<AdminAddExercisePage />} />
+      </Route>
 
       <Route path="*" element={<p>404 - Page not found</p>} />
     </Routes>

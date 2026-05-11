@@ -361,6 +361,34 @@
   cursor: pointer;
 }
 
+.recent-log-list {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 18px;
+  max-width: 340px;
+}
+
+.recent-log-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid rgba(12, 82, 82, 0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.recent-log-item strong {
+  color: #1b1c1c;
+  font-size: 14px;
+}
+
+.recent-log-item span {
+  color: #4a6458;
+  font-size: 13px;
+}
+
 .monthly-orb {
   position: absolute;
   top: -45px;

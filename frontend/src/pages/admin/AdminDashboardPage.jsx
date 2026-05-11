@@ -1,34 +1,47 @@
 import './AdminDashboardPage.css';
 import AdminSidebar from '../../components/AdminSidebar';
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { adminApi } from '../../services/relaxaApi.js';
 
 function AdminDashboardPage() {
-  const users = [
-    {
-      name: 'Sarah Jenkins',
-      email: 'sarah.j@example.com',
-      status: 'Active',
-      role: 'Premium Member',
-      avatar:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuAFU-TKOvYDDl2p8k1GDK1IMy7LCROcj_pFx6pWIRWG-3ijJY7CgzTteP7WssizwYA5gShGrFE9Ya-DWE8ut2fH1aNgXQeqJ6k4UjE4_aZQqoT7vD5z_15ElIi2Rf18fsxZv4Tm4ttBMXeYdC-H4jAbVRMt6jiiPM7ZU9C1Ybb1bns9k-ug_HMzKYTFRTg0vtwBp0Hv6RkMWbv1ATrRKD73kg2qUhRy_laFlRVI7rvjcEapRLuvOrSC9x1Zo7c4vI1EExYY2a-De-7P',
-    },
-    {
-      name: 'Marcus Kinsley',
-      email: 'm.kinsley@site.co',
-      status: 'Away',
-      role: 'Free Tier',
-      avatar:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuC4y250N1Skxmay4elsdgdffyLS8KZ3GcO8qShMJFvi2Pe_wFXjh0CxvxQsiJ0Sla0iT6kfVVFInYTCLSXnX8BFD7T7q6QIJ4O7h13fKwMWxqoPFhxlO5MsI8PDwrTO4EcG-wqtWVSUldhh2OZsfjJo6PvOjzc3YXMgA4xCYUUXmg3Sli1zea28do3jQFbOyp9gv9d8JQ6acyjSkmk0-s0s38HwNMx9ypRAe6tY8XHAOz8Fg2zE0C8XBKiUp_uaBTrpFZ_Rs1C_MP-f',
-    },
-    {
-      name: 'Elena Volkov',
-      email: 'elena.v@cloud.net',
-      status: 'Active',
-      role: 'Coach',
-      avatar:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuCgHxK1ZaaFLUTYluUHPz0AbMBvU1tvDZYhciRqqmaxl6QPOTZA2Z451TyWn7QXvoXT8VInNlwk-0d2HD5aBifqLEOmHlgEwm3ZOIHB_ZhvETvySAOBNtDckB4SkDiLYwbjyh_wodEJuseX8qZp6XLTihD4QcHR4OYxBOQhXxzldx7ROWH5yWidvtYMZx47xK6rblO5oJS_B3csXI1vOUuS--pXTGQryd75B7csiWj1-kSb-asPsS5MvkkkTv7TPKG8sDUo3hYMQ92g',
-    },
-  ];
+  const adminToken = localStorage.getItem('relaxaAdminToken');
+  const [summary, setSummary] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    totalExercises: 0,
+    platformHealth: 99.9,
+  });
+  const [users, setUsers] = useState([]);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0, limit: 10 });
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        setIsLoading(true);
+        setErrorMessage('');
+
+        const [summaryResult, usersResult] = await Promise.all([
+          adminApi.getAnalyticsSummary({ token: adminToken }),
+          adminApi.getUsers({ token: adminToken, page, limit: 10, search }),
+        ]);
+
+        setSummary(summaryResult.data || {});
+        setUsers(usersResult.data || []);
+        setPagination(usersResult.pagination || { page: 1, totalPages: 1, total: 0, limit: 10 });
+      } catch (error) {
+        setErrorMessage(error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDashboard();
+  }, [adminToken, page, search]);
 
   return (
     <div className="admin-dashboard">
@@ -55,10 +68,10 @@ function AdminDashboardPage() {
                 <span className="material-symbols-outlined">group</span>
               </div>
             </div>
-            <h3>12,842</h3>
+            <h3>{summary.totalUsers || 0}</h3>
             <p className="trend">
               <span className="material-symbols-outlined">trending_up</span>
-              <strong>+12%</strong> vs last month
+              <strong>{pagination.total || 0}</strong> records in database
             </p>
           </article>
 
@@ -69,8 +82,19 @@ function AdminDashboardPage() {
                 <span className="material-symbols-outlined">bolt</span>
               </div>
             </div>
-            <h3>4,291</h3>
-            <p>Real-time engagement tracking</p>
+            <h3>{summary.activeUsers || 0}</h3>
+            <p>Users active in the last 30 days</p>
+          </article>
+
+          <article className="admin-stat-card">
+            <div className="card-head">
+              <span>Total Exercises</span>
+              <div className="icon-circle alt">
+                <span className="material-symbols-outlined">subscriptions</span>
+              </div>
+            </div>
+            <h3>{summary.totalExercises || 0}</h3>
+            <p>Guided sessions available to users</p>
           </article>
 
           <article className="admin-stat-card health">
@@ -80,7 +104,7 @@ function AdminDashboardPage() {
                 <span className="material-symbols-outlined">verified_user</span>
               </div>
             </div>
-            <h3>99.9%</h3>
+            <h3>{summary.platformHealth || 99.9}%</h3>
             <div className="health-track">
               <span />
             </div>
@@ -89,63 +113,93 @@ function AdminDashboardPage() {
 
         <section className="admin-table-card">
           <div className="table-head">
-            <h3>Recent Registrations</h3>
+            <h3>Registered Users</h3>
             <div className="table-actions">
               <div className="search-box">
                 <span className="material-symbols-outlined">search</span>
-                <input type="text" placeholder="Search users..." />
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={search}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setPage(1);
+                  }}
+                />
               </div>
-              <button type="button" className="filter-btn">
-                <span className="material-symbols-outlined">filter_list</span>
-                Filter
+              <button type="button" className="filter-btn" onClick={() => window.location.reload()}>
+                <span className="material-symbols-outlined">refresh</span>
+                Refresh
               </button>
             </div>
           </div>
+
+          {errorMessage && <p className="admin-inline-error">{errorMessage}</p>}
 
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
                   <th>User</th>
-                  <th>Status</th>
                   <th>Role</th>
-                  <th>Actions</th>
+                  <th>Joined</th>
+                  <th>Access</th>
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
-                  <tr key={user.email}>
-                    <td>
-                      <div className="user-cell">
-                        <img src={user.avatar} alt={user.name} />
-                        <div>
-                          <strong>{user.name}</strong>
-                          <small>{user.email}</small>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`status-pill ${user.status.toLowerCase()}`}>{user.status}</span>
-                    </td>
-                    <td>{user.role}</td>
-                    <td className="action-cell">
-                      <button type="button">
-                        <span className="material-symbols-outlined">more_vert</span>
-                      </button>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan="4" className="admin-table-empty">
+                      Loading users...
                     </td>
                   </tr>
-                ))}
+                ) : users.length ? (
+                  users.map((user) => (
+                    <tr key={user._id || user.email}>
+                      <td>
+                        <div className="user-cell">
+                          <div className="user-avatar-fallback">
+                            {(user.name || 'U').slice(0, 1).toUpperCase()}
+                          </div>
+                          <div>
+                            <strong>{user.name}</strong>
+                            <small>{user.email}</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td>{user.role}</td>
+                      <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                      <td>
+                        <span className={`status-pill ${user.role === 'admin' ? 'admin' : 'active'}`}>
+                          {user.role === 'admin' ? 'Admin' : 'User'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="admin-table-empty">
+                      No users found for this search.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
 
           <div className="table-footer">
-            <span>Showing 1-10 of 12,842 users</span>
+            <span>
+              Showing page {pagination.page || 1} of {pagination.totalPages || 1} ({pagination.total || 0} users)
+            </span>
             <div className="table-pager">
-              <button type="button" disabled>
+              <button type="button" disabled={page <= 1} onClick={() => setPage((prev) => Math.max(prev - 1, 1))}>
                 <span className="material-symbols-outlined">chevron_left</span>
               </button>
-              <button type="button">
+              <button
+                type="button"
+                disabled={page >= (pagination.totalPages || 1)}
+                onClick={() => setPage((prev) => prev + 1)}
+              >
                 <span className="material-symbols-outlined">chevron_right</span>
               </button>
             </div>

@@ -129,6 +129,32 @@
   margin: 0;
 }
 
+.exercise-search {
+  margin-top: 20px;
+  max-width: 360px;
+  position: relative;
+}
+
+.exercise-search .material-symbols-outlined {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #707978;
+  font-size: 18px;
+}
+
+.exercise-search input {
+  width: 100%;
+  height: 46px;
+  border: 1px solid #d6dede;
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 0 14px 0 38px;
+  font: inherit;
+  outline: none;
+}
+
 .exercise-grid {
   margin-top: 36px;
   display: grid;
@@ -186,6 +212,13 @@
 .exercise-content p {
   margin: 0;
   color: #3f4848;
+}
+
+.exercise-resource {
+  margin-top: 12px;
+  color: #0c5252;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .exercise-content button {
@@ -271,6 +304,17 @@
 .integration-visual .material-symbols-outlined {
   color: #0c5252;
   font-size: 38px;
+}
+
+.exercise-page-message {
+  margin: 8px 0 0;
+  color: #516262;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.exercise-page-message--error {
+  color: #b3261e;
 }
 
 .exercise-zen-toggle {

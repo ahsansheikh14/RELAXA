@@ -15,11 +15,13 @@ function LoginPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [resetLink, setResetLink] = useState('');
 
   const resetAuthForm = () => {
     setFormData({ name: '', email: '', password: '' });
     setErrorMessage('');
     setInfoMessage('');
+    setResetLink('');
     setShowPassword(false);
   };
 
@@ -36,6 +38,7 @@ function LoginPage() {
   const handleAuthSubmit = async () => {
     setErrorMessage('');
     setInfoMessage('');
+    setResetLink('');
     setIsSubmitting(true);
 
     const endpoint = activeTab === 'signup' ? '/api/v1/auth/register' : '/api/v1/auth/login';
@@ -69,7 +72,7 @@ function LoginPage() {
 
       navigate('/dashboard');
     } catch (error) {
-      setErrorMessage(error.message);
+      setErrorMessage(error.message === 'Failed to fetch' ? 'Backend is not reachable. Start the backend server first.' : error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -78,6 +81,7 @@ function LoginPage() {
   const handleForgotPassword = async () => {
     setErrorMessage('');
     setInfoMessage('');
+    setResetLink('');
     if (!formData.email.trim()) {
       setErrorMessage('Please enter your email first.');
       return;
@@ -93,9 +97,10 @@ function LoginPage() {
       if (!response.ok) {
         throw new Error(result.message || 'Unable to process forgot password.');
       }
-      setInfoMessage('Reset link sent. Check your email inbox.');
-    } catch (error) { 
-      setErrorMessage(error.message);
+      setInfoMessage(result.message || 'Password reset instructions sent.');
+      setResetLink(result.resetLink || '');
+    } catch (error) {
+      setErrorMessage(error.message === 'Failed to fetch' ? 'Backend is not reachable. Start the backend server first.' : error.message);
     }
   };
 
@@ -202,6 +207,11 @@ function LoginPage() {
 
             {errorMessage && <p className="auth-error">{errorMessage}</p>}
             {infoMessage && <p className="auth-info">{infoMessage}</p>}
+            {resetLink && (
+              <a className="auth-reset-link" href={resetLink}>
+                Open password reset page
+              </a>
+            )}
 
             <button className="submit-btn" type="button" onClick={handleAuthSubmit} disabled={isSubmitting}>
               {isSubmitting ? 'Please wait...' : 'Enter Sanctuary'}

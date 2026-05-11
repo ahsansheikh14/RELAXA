@@ -6,6 +6,8 @@ const exerciseSchema = new mongoose.Schema(
     category: { type: String, required: true, trim: true },
     durationMinutes: { type: Number, required: true, min: 1 },
     description: { type: String },
+    mediaType: { type: String, enum: ['none', 'link', 'video'], default: 'none' },
+    mediaUrl: { type: String, trim: true },
   },
   { timestamps: true }
 );

@@ -225,6 +225,41 @@
   justify-content: center;
 }
 
+.profile-details-card {
+  margin: 8px 0 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f8fafa;
+  border: 1px solid #e5ecec;
+  display: grid;
+  gap: 10px;
+}
+
+.profile-details-card p {
+  margin: 0;
+  color: #516262;
+  font-size: 14px;
+}
+
+.profile-detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.profile-detail-row span {
+  color: #6c7a7a;
+  font-size: 13px;
+}
+
+.profile-detail-row strong {
+  color: #1f3536;
+  font-size: 13px;
+  text-align: right;
+  word-break: break-word;
+}
+
 .settings-error,
 .settings-message {
   margin: 0 0 8px;

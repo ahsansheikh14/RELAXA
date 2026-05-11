@@ -43,6 +43,11 @@ const getMailTransporter = () => {
   });
 };
 
+const buildResetLink = (email, rawToken) => {
+  const frontendBaseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  return `${frontendBaseUrl}/reset-password?token=${rawToken}&email=${encodeURIComponent(email)}`;
+};
+
 const registerUser = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
@@ -132,13 +137,6 @@ const forgotPassword = async (req, res, next) => {
       });
     }
 
-    const transporter = getMailTransporter();
-    if (!transporter) {
-      return res.status(503).json({
-        message: 'Password reset email service is not configured yet.',
-      });
-    }
-
     const rawToken = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
 
@@ -146,10 +144,21 @@ const forgotPassword = async (req, res, next) => {
     user.passwordResetExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
 
-    const frontendBaseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const resetLink = `${frontendBaseUrl}/reset-password?token=${rawToken}&email=${encodeURIComponent(
-      normalizedEmail
-    )}`;
+    const resetLink = buildResetLink(normalizedEmail, rawToken);
+    const transporter = getMailTransporter();
+
+    if (!transporter) {
+      if (process.env.NODE_ENV !== 'production') {
+        return res.status(200).json({
+          message: 'Email service is not configured, so a temporary reset link was generated for local testing.',
+          resetLink,
+        });
+      }
+
+      return res.status(503).json({
+        message: 'Password reset email service is not configured yet.',
+      });
+    }
 
     await transporter.sendMail({
       from: process.env.SMTP_FROM || process.env.SMTP_USER,

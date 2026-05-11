@@ -144,6 +144,36 @@
   font-weight: 600;
 }
 
+.admin-auth-info {
+  margin: 0;
+  color: #0c5252;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-login-hint {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #f5f8f8;
+  border: 1px solid #dbe7e7;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.admin-login-hint strong {
+  color: #1b1c1c;
+  font-size: 14px;
+}
+
+.admin-login-hint span {
+  color: #0c5252;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .secure-session {
   margin-top: 22px;
   padding-top: 22px;

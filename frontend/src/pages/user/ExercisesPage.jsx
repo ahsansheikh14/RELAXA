@@ -1,36 +1,55 @@
 import UserNavbar from '../../components/UserNavbar';
 import './ExercisesPage.css';
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
 import { toggleZenMode } from '../../utils/zenMode.js';
+import { exerciseApi } from '../../services/relaxaApi.js';
+import { getExerciseVisual } from '../../utils/exerciseDisplay.js';
 
 function ExercisesPage() {
   const navigate = useNavigate();
-  const exerciseCards = [
-    {
-      title: 'Work Stress',
-      duration: '10 MIN',
-      icon: 'laptop_mac',
-      description: 'Gently release tension from the shoulders and mind after a demanding day at the desk.',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuB_kf2lpvT0db-z7g_4HtCasKJjjKQIK406J7SUlXQjRm8UDnN8pjsHhbGHD61hCfhMEYSnGg7y4pQ0od9MlZj8mXYdN6EndakdpIR8MuubLENXQg2RbzhfJ2kDdeMxQjMHWUmMe3ueADZ3lnxD0lfJ4Vk2j-DSDpuR4YiVJOcNUismNdvGWOZuF2DiSiUqa9Cb9NkcDohcrEhj5UbXawwklfkVLR4Kr9-I4yjCyxEqkQR2VkWnSRh258ai0hi18R5zZNO_AfQhX2tr',
-    },
-    {
-      title: 'Anxiety Relief',
-      duration: '15 MIN',
-      icon: 'air',
-      description: 'Ground your thoughts with tactile breathing techniques designed to calm the nervous system.',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuCVhvIO8mycvhVcqWlBMu6y3ZzE6PAoxc-Pz_5UTfKQGybABScojbTgzT5FhGh817WwuR-VI1VGCtOlUFSIaAHBnyrQimtcvD6PlWVRW610DfS9DeHvtGW_-Ql6EyvoYx7Z7gIJiCG9GKLVaw9be5rnjNpcMkLru2ZnIiF-Zwm12-P-5P03sk178CiIh5_iWCz4O9yQki-uSc3kRh3geeHrukHFPqwwDtbsAWRKwhdDFAOG-bxQJcXV2q3c7D8aUYFnWwkmc4ItjJgj',
-    },
-    {
-      title: 'Sleep Relaxation',
-      duration: '25 MIN',
-      icon: 'bedtime',
-      description: 'A deep auditory journey to help you drift into a restful, restorative sleep naturally.',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuAeww9CREOi2wB0f-MJfMq-Rlb4woJ4S-n410GLxp7dbeuPOl-IwZUKHdo_Q44RtplTr4wHFnfnwcgUdE39Ed_0wUkssDCW7GcJ-Z6HJY-3_1eln4x4jPf8brOFCjIaWbc_5i_DGx2_gcvpOc2_gugA5oGkTW-lnXpuN_h6Iq6zHSSGOm1bErIjNzMVu_Y19E9g_Ndkw40NzEvY2beD8QubJo9sva8Hwq-EMQsy8NQUrZwDcwfcxNckA5DYXkieooIWgYs8Kd5sq8zN',
-    },
-  ];
+  const userToken = localStorage.getItem('relaxaToken');
+  const [exercises, setExercises] = useState([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    const loadExercises = async () => {
+      if (!userToken) {
+        setLoading(false);
+        setLoadError('Please login again to view your exercise library.');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setLoadError('');
+        const result = await exerciseApi.list({ token: userToken, search });
+        setExercises(Array.isArray(result.data) ? result.data : []);
+      } catch (error) {
+        setLoadError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadExercises();
+  }, [search, userToken]);
+
+  const mediaReadyCount = useMemo(
+    () => exercises.filter((exercise) => exercise.mediaType === 'link' || exercise.mediaType === 'video').length,
+    [exercises]
+  );
+
+  const handleExerciseAction = (exercise) => {
+    if (exercise.mediaUrl) {
+      window.open(exercise.mediaUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    navigate('/chat');
+  };
 
   return (
     <div className="exercises-page">
@@ -58,10 +77,10 @@ function ExercisesPage() {
           </button>
 
           <div className="breath-widget">
-            <p>Feeling stressed?</p>
-            <h4>Start Breathing Exercise</h4>
+            <p>Exercise Library</p>
+            <h4>{exercises.length} sessions available</h4>
             <div className="breath-progress">
-              <span />
+              <span style={{ width: `${Math.min(100, Math.max(12, mediaReadyCount * 12))}%` }} />
             </div>
           </div>
         </aside>
@@ -74,36 +93,59 @@ function ExercisesPage() {
               Take a moment for yourself. Choose a journey that resonates with your current state of being and let us
               guide you back to center.
             </p>
+            <div className="exercise-search">
+              <span className="material-symbols-outlined">search</span>
+              <input
+                type="text"
+                placeholder="Search exercises..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </div>
           </header>
 
           <section className="exercise-grid">
-            {exerciseCards.map((card) => (
-              <article key={card.title} className="exercise-card">
-                <div className="exercise-image-wrap">
-                  <img src={card.image} alt={card.title} />
-                </div>
-                <div className="exercise-content">
-                  <div className="exercise-meta">
-                    <span>{card.duration}</span>
-                    <span className="material-symbols-outlined">{card.icon}</span>
-                  </div>
-                  <h2>{card.title}</h2>
-                  <p>{card.description}</p>
-                  <button type="button" onClick={() => navigate('/chat')}>
-                    Begin Session
-                    <span className="material-symbols-outlined">arrow_forward</span>
-                  </button>
-                </div>
-              </article>
-            ))}
+            {loading ? (
+              <p className="exercise-page-message">Loading exercises...</p>
+            ) : loadError ? (
+              <p className="exercise-page-message exercise-page-message--error">{loadError}</p>
+            ) : exercises.length ? (
+              exercises.map((exercise, index) => {
+                const visual = getExerciseVisual(exercise, index);
+
+                return (
+                  <article key={exercise._id || exercise.title} className="exercise-card">
+                    <div className="exercise-image-wrap">
+                      <img src={visual.image} alt={exercise.title} />
+                    </div>
+                    <div className="exercise-content">
+                      <div className="exercise-meta">
+                        <span>{exercise.durationMinutes} MIN</span>
+                        <span className="material-symbols-outlined">{visual.icon}</span>
+                      </div>
+                      <h2>{exercise.title}</h2>
+                      <p>{exercise.description || 'A guided wellness practice added by your admin team.'}</p>
+                      <div className="exercise-resource">{visual.mediaLabel}</div>
+                      <button type="button" onClick={() => handleExerciseAction(exercise)}>
+                        {exercise.mediaUrl ? 'Open Session' : 'Begin Session'}
+                        <span className="material-symbols-outlined">arrow_forward</span>
+                      </button>
+                    </div>
+                  </article>
+                );
+              })
+            ) : (
+              <p className="exercise-page-message">No exercises found yet. Admin-added sessions will appear here.</p>
+            )}
           </section>
 
           <section className="integration-card">
             <div className="integration-content">
               <h3>Deep Breath Integration</h3>
               <p>
-                Our latest AI-driven breathing assistant syncs with your heart rate to provide personalized pacing for
-                every session.
+                {mediaReadyCount
+                  ? `${mediaReadyCount} exercise sessions now include video or guided links from the admin library.`
+                  : 'As your admin uploads new guided sessions, they will appear here automatically.'}
               </p>
               <button type="button" onClick={toggleZenMode}>Explore Zen Mode</button>
             </div>

@@ -9,6 +9,9 @@ function UserNavbar() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileData, setProfileData] = useState(null);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
@@ -21,6 +24,42 @@ function UserNavbar() {
   const handleLogout = () => {
     clearUserSession();
     navigate('/login');
+  };
+
+  const handleToggleProfile = async () => {
+    const nextOpen = !profileOpen;
+    setProfileOpen(nextOpen);
+    setChangePasswordOpen(false);
+    setSettingsError('');
+    setSettingsMessage('');
+
+    if (!nextOpen || profileData) {
+      return;
+    }
+
+    try {
+      setProfileLoading(true);
+      const token = localStorage.getItem('relaxaToken');
+      const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Unable to load profile details.');
+      }
+
+      setProfileData(result.user);
+      if (result.user?.name) {
+        localStorage.setItem('relaxaUserName', result.user.name);
+      }
+    } catch (error) {
+      setSettingsError(error.message);
+    } finally {
+      setProfileLoading(false);
+    }
   };
 
   const handleSubmitPasswordChange = async () => {
@@ -129,13 +168,42 @@ function UserNavbar() {
 
             <div className="settings-panel__section">
               <p className="settings-label">Account</p>
-              <button type="button" onClick={() => navigate('/dashboard')}>
+              <button type="button" onClick={handleToggleProfile}>
                 <span className="material-symbols-outlined">account_circle</span>
                 Profile
               </button>
+              {profileOpen && (
+                <div className="profile-details-card">
+                  {profileLoading ? (
+                    <p>Loading profile...</p>
+                  ) : profileData ? (
+                    <>
+                      <div className="profile-detail-row">
+                        <span>Name</span>
+                        <strong>{profileData.name}</strong>
+                      </div>
+                      <div className="profile-detail-row">
+                        <span>Email</span>
+                        <strong>{profileData.email}</strong>
+                      </div>
+                      <div className="profile-detail-row">
+                        <span>Role</span>
+                        <strong>{profileData.role}</strong>
+                      </div>
+                      <div className="profile-detail-row">
+                        <span>Member Since</span>
+                        <strong>{new Date(profileData.createdAt).toLocaleDateString()}</strong>
+                      </div>
+                    </>
+                  ) : (
+                    <p>No profile data available.</p>
+                  )}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={() => {
+                  setProfileOpen(false);
                   setChangePasswordOpen((prev) => !prev);
                   setSettingsError('');
                   setSettingsMessage('');

@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
 const buildHeaders = (token, extraHeaders = {}) => {
   const headers = { 'Content-Type': 'application/json', ...extraHeaders };
@@ -33,16 +33,44 @@ export const adminApi = {
       body: JSON.stringify({ email, password }),
     }),
 
+  forgotPassword: ({ email }) =>
+    request('/admin/forgot-password', {
+      method: 'POST',
+      headers: buildHeaders(),
+      body: JSON.stringify({ email }),
+    }),
+
   getUsers: ({ token, page = 1, limit = 10, search = '' } = {}) =>
     request(`/admin/users?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`, {
+      method: 'GET',
+      headers: buildHeaders(token),
+    }),
+
+  getAnalyticsSummary: ({ token } = {}) =>
+    request('/admin/analytics/summary', {
+      method: 'GET',
+      headers: buildHeaders(token),
+    }),
+
+  getActivityMix: ({ token } = {}) =>
+    request('/admin/analytics/activity-mix', {
       method: 'GET',
       headers: buildHeaders(token),
     }),
 };
 
 export const exerciseApi = {
-  list: ({ token, category = '' } = {}) =>
-    request(`/exercises${category ? `?category=${encodeURIComponent(category)}` : ''}`, {
+  list: ({ token, category = '', search = '' } = {}) =>
+    request(
+      `/exercises?category=${encodeURIComponent(category)}&search=${encodeURIComponent(search)}`,
+      {
+        method: 'GET',
+        headers: buildHeaders(token),
+      }
+    ),
+
+  getById: ({ token, id }) =>
+    request(`/exercises/${id}`, {
       method: 'GET',
       headers: buildHeaders(token),
     }),
@@ -71,6 +99,21 @@ export const exerciseApi = {
 export const reportApi = {
   moodTrends: ({ token, days = 30 } = {}) =>
     request(`/reports/mood-trends?days=${days}`, {
+      method: 'GET',
+      headers: buildHeaders(token),
+    }),
+};
+
+export const moodApi = {
+  create: ({ token, data }) =>
+    request('/moods', {
+      method: 'POST',
+      headers: buildHeaders(token),
+      body: JSON.stringify(data),
+    }),
+
+  history: ({ token, limit = 30 } = {}) =>
+    request(`/moods/history?limit=${limit}`, {
       method: 'GET',
       headers: buildHeaders(token),
     }),
