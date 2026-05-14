@@ -4,16 +4,18 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { toggleZenMode } from '../../utils/zenMode.js';
 import { API_BASE_URL } from '../../utils/auth.js';
-import { exerciseApi, moodApi, reportApi } from '../../services/relaxaApi.js';
+import { aiApi, moodApi, reportApi } from '../../services/relaxaApi.js';
 import { getExerciseVisual } from '../../utils/exerciseDisplay.js';
+import { USER_MOOD_OPTIONS } from '../../constants/moodOptions.js';
 
 function DashboardPage() {
   const navigate = useNavigate();
   const userToken = localStorage.getItem('relaxaToken');
   const [userName, setUserName] = useState(localStorage.getItem('relaxaUserName') || 'there');
+  const [currentMood, setCurrentMood] = useState(localStorage.getItem('relaxaCurrentMood') || '');
+  const [moodNote, setMoodNote] = useState('');
   const [exercises, setExercises] = useState([]);
   const [insightText, setInsightText] = useState('Your next calm session is waiting for you.');
-  const [dashboardMessage, setDashboardMessage] = useState('');
   const [dashboardError, setDashboardError] = useState('');
   const [savingMood, setSavingMood] = useState('');
   const moods = [
@@ -31,12 +33,12 @@ function DashboardPage() {
 
     const loadDashboardData = async () => {
       try {
-        const [profileResponse, exerciseResult, moodTrendResult] = await Promise.all([
+        const [profileResponse, moodTrendResult, moodHistoryResult] = await Promise.all([
           fetch(`${API_BASE_URL}/api/v1/users/me`, {
             headers: { Authorization: `Bearer ${userToken}` },
           }),
-          exerciseApi.list({ token: userToken }),
           reportApi.moodTrends({ token: userToken, days: 7 }),
+          moodApi.history({ token: userToken, limit: 1 }),
         ]);
 
         const profileResult = await profileResponse.json();
@@ -45,15 +47,37 @@ function DashboardPage() {
           localStorage.setItem('relaxaUserName', profileResult.user.name);
         }
 
-        const exerciseItems = Array.isArray(exerciseResult.data) ? exerciseResult.data : [];
-        setExercises(exerciseItems.slice(0, 3));
+        const latestMood = moodHistoryResult.moods?.[0]?.mood || localStorage.getItem('relaxaCurrentMood') || '';
+        if (USER_MOOD_OPTIONS.includes(latestMood)) {
+          setCurrentMood(latestMood);
+          setMoodNote(`Today's mood: ${latestMood}.`);
+          localStorage.setItem('relaxaCurrentMood', latestMood);
+          const recommendationResult = await aiApi.recommendations({
+            token: userToken,
+            currentMood: latestMood,
+            algorithm: 'a_star',
+            limit: 3,
+          });
+          const exerciseItems = Array.isArray(recommendationResult.data?.recommendedExercises)
+            ? recommendationResult.data.recommendedExercises
+            : [];
+          setExercises(exerciseItems.slice(0, 3));
+          setInsightText(
+            exerciseItems.length
+              ? `${exerciseItems.length} exercise${exerciseItems.length > 1 ? 's are' : ' is'} ready for your ${latestMood.toLowerCase()} mood.`
+              : `No exercises are assigned to the ${latestMood.toLowerCase()} mood yet.`
+          );
+        } else {
+          setCurrentMood('');
+          setExercises([]);
+          setMoodNote('Choose your mood to see matching exercises.');
+          setInsightText('Choose your mood to unlock personalized exercise recommendations.');
+        }
 
         const trendItems = Array.isArray(moodTrendResult.data) ? moodTrendResult.data : [];
         if (trendItems.length) {
           const totalEntries = trendItems.reduce((sum, item) => sum + (item.entries || 0), 0);
           setInsightText(`You captured ${totalEntries} mood check-ins this week. Keep the momentum going.`);
-        } else if (exerciseItems.length) {
-          setInsightText(`${exerciseItems.length} guided exercises are ready for you right now.`);
         }
       } catch {
         // Keep existing UI if dashboard fetch fails.
@@ -76,7 +100,6 @@ function DashboardPage() {
 
     try {
       setDashboardError('');
-      setDashboardMessage('');
       setSavingMood(mood.label);
 
       await moodApi.create({
@@ -88,7 +111,25 @@ function DashboardPage() {
         },
       });
 
-      setDashboardMessage(`${mood.label} mood saved. Your reports will now update from this entry.`);
+      localStorage.setItem('relaxaCurrentMood', mood.label);
+      setCurrentMood(mood.label);
+      setMoodNote(`${mood.label} mood saved for today.`);
+
+      const recommendationResult = await aiApi.recommendations({
+        token: userToken,
+        currentMood: mood.label,
+        algorithm: 'a_star',
+        limit: 3,
+      });
+      const exerciseItems = Array.isArray(recommendationResult.data?.recommendedExercises)
+        ? recommendationResult.data.recommendedExercises
+        : [];
+      setExercises(exerciseItems.slice(0, 3));
+      setInsightText(
+        exerciseItems.length
+          ? `${exerciseItems.length} exercise${exerciseItems.length > 1 ? 's are' : ' is'} ready for your ${mood.label.toLowerCase()} mood.`
+          : `No exercises are assigned to the ${mood.label.toLowerCase()} mood yet.`
+      );
     } catch (error) {
       setDashboardError(error.message);
     } finally {
@@ -108,6 +149,7 @@ function DashboardPage() {
         <p className="dashboard-subtitle">
           Take a deep breath. Today is a new opportunity to nurture your mind and find your inner sanctuary.
         </p>
+        {moodNote && <p className="dashboard-mood-note">{moodNote}</p>}
 
         <section className="mood-section">
           <h2 className="section-title">How are you feeling right now?</h2>
@@ -122,7 +164,6 @@ function DashboardPage() {
             ))}
           </div>
           {dashboardError && <p className="dashboard-feedback dashboard-feedback--error">{dashboardError}</p>}
-          {dashboardMessage && <p className="dashboard-feedback dashboard-feedback--success">{dashboardMessage}</p>}
         </section>
 
         <section className="focus-grid">
@@ -136,7 +177,7 @@ function DashboardPage() {
             <div className="featured-content">
               <div className="featured-tags">
                 <span>RECOMMENDED</span>
-                <span>{featuredExercise ? `${featuredExercise.durationMinutes} MIN` : 'NEW'}</span>
+                <span>{currentMood || (featuredExercise ? `${featuredExercise.durationMinutes} MIN` : 'CHOOSE MOOD')}</span>
               </div>
               <h3>{featuredExercise?.title || 'Your next calm session'}</h3>
               <p>

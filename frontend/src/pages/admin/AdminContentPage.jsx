@@ -101,6 +101,9 @@ function AdminContentPage() {
 
                   <div className="exercise-meta-list">
                     <span>
+                      <strong>Target Mood:</strong> {exercise.targetMood || 'Not set'}
+                    </span>
+                    <span>
                       <strong>Media:</strong> {exercise.mediaType || 'none'}
                     </span>
                     {exercise.mediaUrl && (

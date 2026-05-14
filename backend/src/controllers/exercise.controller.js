@@ -1,8 +1,10 @@
 import Exercise from '../models/exercise.model.js';
+import { USER_MOOD_OPTIONS } from '../constants/moods.constants.js';
 
 const sanitizeExercisePayload = (payload) => {
   const mediaType = ['none', 'link', 'video'].includes(payload.mediaType) ? payload.mediaType : 'none';
   const mediaUrl = String(payload.mediaUrl || '').trim();
+  const targetMood = String(payload.targetMood || '').trim();
 
   if (mediaType !== 'none' && !mediaUrl) {
     const error = new Error('mediaUrl is required when mediaType is link or video.');
@@ -10,9 +12,16 @@ const sanitizeExercisePayload = (payload) => {
     throw error;
   }
 
+  if (!USER_MOOD_OPTIONS.includes(targetMood)) {
+    const error = new Error(`targetMood must be one of: ${USER_MOOD_OPTIONS.join(', ')}.`);
+    error.statusCode = 400;
+    throw error;
+  }
+
   return {
     title: String(payload.title || '').trim(),
     category: String(payload.category || '').trim(),
+    targetMood,
     durationMinutes: Number(payload.durationMinutes),
     description: String(payload.description || '').trim(),
     mediaType,
@@ -24,10 +33,14 @@ const getExercises = async (req, res) => {
   try {
     const category = (req.query.category || '').trim();
     const search = (req.query.search || '').trim();
+    const targetMood = (req.query.targetMood || '').trim();
     const query = {};
 
     if (category) {
       query.category = { $regex: `^${category}$`, $options: 'i' };
+    }
+    if (targetMood) {
+      query.targetMood = { $regex: `^${targetMood}$`, $options: 'i' };
     }
     if (search) {
       query.$or = [
@@ -44,6 +57,7 @@ const getExercises = async (req, res) => {
       data: exercises,
       filters: {
         category: category || null,
+        targetMood: targetMood || null,
         search: search || null,
       },
     });

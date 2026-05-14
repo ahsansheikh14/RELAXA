@@ -1,8 +1,160 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import UserNavbar from '../../components/UserNavbar';
-import './ChatPage.css';
+import { aiApi } from '../../services/relaxaApi.js';
 import { toggleZenMode } from '../../utils/zenMode.js';
+import './ChatPage.css';
+
+const STARTER_PROMPTS = [
+  'I feel stressed today. Can you help me calm down?',
+  'Give me a short breathing exercise for anxiety.',
+  'Can we talk through what to do when I feel overwhelmed?',
+  'Suggest a gentle night routine for better sleep.',
+];
+
+const upsertConversationSummary = (items, nextSummary) => [
+  nextSummary,
+  ...items.filter((item) => item.id !== nextSummary.id),
+];
 
 function ChatPage() {
+  const navigate = useNavigate();
+  const scrollAnchorRef = useRef(null);
+  const token = localStorage.getItem('relaxaToken');
+  const userName = localStorage.getItem('relaxaUserName') || 'there';
+
+  const [conversations, setConversations] = useState([]);
+  const [activeConversationId, setActiveConversationId] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [draft, setDraft] = useState('');
+  const [pageError, setPageError] = useState('');
+  const [pageMessage, setPageMessage] = useState('');
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
+  const [isConversationLoading, setIsConversationLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+
+  const starterPrompts = useMemo(() => STARTER_PROMPTS, []);
+
+  const loadConversation = useCallback(
+    async (conversationId) => {
+      if (!token || !conversationId) {
+        return;
+      }
+
+      try {
+        setIsConversationLoading(true);
+        setPageError('');
+        const response = await aiApi.getConversation({ token, conversationId });
+        setActiveConversationId(response.conversation.id);
+        setMessages(response.conversation.messages || []);
+      } catch (error) {
+        setPageError(error.message);
+      } finally {
+        setIsConversationLoading(false);
+      }
+    },
+    [token]
+  );
+
+  const loadConversationList = useCallback(async () => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      setIsHistoryLoading(true);
+      setPageError('');
+      const response = await aiApi.listConversations({ token });
+      const items = response.items || [];
+      setConversations(items);
+
+      if (items.length > 0) {
+        await loadConversation(items[0].id);
+      } else {
+        setActiveConversationId('');
+        setMessages([]);
+        setPageMessage('Start a new conversation with Relaxa AI.');
+      }
+    } catch (error) {
+      setPageError(error.message);
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  }, [loadConversation, navigate, token]);
+
+  useEffect(() => {
+    loadConversationList();
+  }, [loadConversationList]);
+
+  useEffect(() => {
+    scrollAnchorRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isConversationLoading, isSending]);
+
+  const handleStartNewChat = () => {
+    setActiveConversationId('');
+    setMessages([]);
+    setDraft('');
+    setPageError('');
+    setPageMessage('New chat ready. Tell Relaxa how you feel.');
+  };
+
+  const handleSendMessage = async (presetMessage = '') => {
+    if (!token || isSending) {
+      return;
+    }
+
+    const messageToSend = String(presetMessage || draft).trim();
+
+    if (!messageToSend) {
+      return;
+    }
+
+    const tempUserMessage = {
+      id: `temp-user-${Date.now()}`,
+      role: 'user',
+      content: messageToSend,
+    };
+
+    const tempAssistantMessage = {
+      id: `temp-assistant-${Date.now()}`,
+      role: 'assistant',
+      content: 'Relaxa is thinking...',
+      isTemporary: true,
+    };
+
+    setDraft('');
+    setPageError('');
+    setPageMessage('');
+    setIsSending(true);
+    setMessages((prev) => [...prev, tempUserMessage, tempAssistantMessage]);
+
+    try {
+      const response = await aiApi.chat({
+        token,
+        message: messageToSend,
+        conversationId: activeConversationId,
+      });
+
+      setActiveConversationId(response.conversation.id);
+      setMessages(response.conversation.messages || []);
+      setConversations((prev) => upsertConversationSummary(prev, response.conversationSummary));
+    } catch (error) {
+      setMessages((prev) => prev.filter((message) => !message.isTemporary && message.id !== tempUserMessage.id));
+      setDraft(messageToSend);
+      setPageError(error.message);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleComposerKeyDown = (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      handleSendMessage();
+    }
+  };
+
   return (
     <div className="chat-page">
       <UserNavbar />
@@ -15,112 +167,132 @@ function ChatPage() {
             </div>
             <div>
               <h2>Zen Assistant</h2>
-              <p>Your digital sanctuary</p>
+              <p>Private, saved AI conversations</p>
             </div>
           </div>
 
-          <button type="button" className="chat-side-btn active">
+          <button
+            type="button"
+            className={`chat-side-btn ${!activeConversationId ? 'active' : ''}`}
+            onClick={handleStartNewChat}
+          >
             <span className="material-symbols-outlined">add_comment</span>
             New Chat
           </button>
-          <button type="button" className="chat-side-btn">
-            <span className="material-symbols-outlined">history</span>
-            Chat History
-          </button>
+
+          <div className="chat-history-section">
+            <p className="chat-history-label">Chat History</p>
+
+            {isHistoryLoading ? (
+              <p className="chat-history-state">Loading chats...</p>
+            ) : conversations.length ? (
+              <div className="chat-history-list">
+                {conversations.map((conversation) => (
+                  <button
+                    key={conversation.id}
+                    type="button"
+                    className={`chat-history-item ${conversation.id === activeConversationId ? 'active' : ''}`}
+                    onClick={() => loadConversation(conversation.id)}
+                  >
+                    <strong>{conversation.title}</strong>
+                    <span>{conversation.lastMessagePreview || 'Open this conversation'}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="chat-history-state">No saved chats yet.</p>
+            )}
+          </div>
 
           <div className="chat-breath-widget">
-            <p>DAILY MINDFULNESS</p>
-            <h4>Ready for your afternoon pause?</h4>
-            <button type="button">
-              <span className="material-symbols-outlined">air</span>
-              Start Breathing Exercise
+            <p>WELLNESS NOTE</p>
+            <h4>AI chat is here when you want to talk instead of doing exercises.</h4>
+            <button type="button" onClick={handleStartNewChat}>
+              <span className="material-symbols-outlined">forum</span>
+              Start Talking
             </button>
           </div>
         </aside>
 
         <main className="chat-main">
           <div className="chat-scroll">
-            <div className="message-row user">
-              <div className="message-bubble user-bubble">
-                Hi Relaxa, I&apos;ve been feeling a bit overwhelmed with work lately. Can we talk about some quick
-                grounding techniques?
-              </div>
-              <img
-                className="message-avatar"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtw8_A0-48brwCsOSqQ1I2fjz_Rx7WXEeyQ0DycdxivtzJntxwplJVV886ktLJFOjYgYHZtDnga4BBJEeZ58e5CV4lj61mbGkEylaId_uvVnq6UddNouCMpQdcxmYw21Twy7wImNrBJHaka8KTHjytAXNrZPo_Ng2OLMoqhmjrCGxV394Rx7hJ-WQPS-XmZR6RK74uY5WD9zAXasg0XRicxb2qCR6ocPZSxjrS1p7wKnp7rxtvgUfcQq5HO-8TLE5TJ5SgAdFJUqq2"
-                alt="User profile"
-              />
-            </div>
+            {!messages.length && !isConversationLoading ? (
+              <>
+                <section className="chat-welcome-card">
+                  <div className="assistant-avatar">
+                    <span className="material-symbols-outlined">auto_awesome</span>
+                  </div>
+                  <div>
+                    <p className="chat-welcome-eyebrow">Relaxa AI</p>
+                    <h3>Hi {userName}, what would you like to talk about today?</h3>
+                    <p className="chat-welcome-copy">
+                      You can vent, ask for calming ideas, talk through stress, or ask for a simple wellness plan.
+                    </p>
+                  </div>
+                </section>
 
-            <div className="message-row ai">
-              <div className="assistant-avatar">
-                <span className="material-symbols-outlined">auto_awesome</span>
-              </div>
-              <div className="message-bubble ai-bubble">
-                <p>
-                  I&apos;m sorry to hear you&apos;re feeling overwhelmed, but I&apos;m here to help you find your
-                  center. Grounding is a beautiful way to bring yourself back to the present moment when the mind
-                  starts to race.
-                </p>
-
-                <div className="technique-box">
-                  <p className="technique-title">
-                    <span className="material-symbols-outlined">psychology</span>
-                    The 5-4-3-2-1 Technique
-                  </p>
-                  <ul>
-                    <li>Name 5 things you can see around you.</li>
-                    <li>Name 4 things you can touch.</li>
-                    <li>Name 3 things you can hear.</li>
-                    <li>Name 2 things you can smell.</li>
-                    <li>Name 1 thing you can taste.</li>
-                  </ul>
+                <div className="suggestion-grid">
+                  {starterPrompts.map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      className="chat-suggestion-card"
+                      onClick={() => handleSendMessage(prompt)}
+                    >
+                      <span className="material-symbols-outlined">lightbulb</span>
+                      <span>{prompt}</span>
+                    </button>
+                  ))}
                 </div>
+              </>
+            ) : isConversationLoading ? (
+              <p className="chat-state-message">Loading conversation...</p>
+            ) : (
+              messages.map((message) => (
+                <div key={message.id} className={`message-row ${message.role === 'user' ? 'user' : 'ai'}`}>
+                  {message.role === 'assistant' ? (
+                    <div className="assistant-avatar">
+                      <span className="material-symbols-outlined">auto_awesome</span>
+                    </div>
+                  ) : null}
 
-                <p>Shall we try the first step together? Tell me 5 things you can see in your environment right now.</p>
-              </div>
-            </div>
+                  <div className={`message-bubble ${message.role === 'user' ? 'user-bubble' : 'ai-bubble'}`}>
+                    {message.content}
+                  </div>
 
-            <div className="suggestion-grid">
-              <article className="guided-card">
-                <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLsAsOvRa6Eczbb_tStS5ct45Wil0f09YSfVTBSCG6eF0xs_zfjuxEIrL3_TX7FTYBj5czSN5gcNUfWiHKeZXqJekoORF2TacxMCAXUC1YowYGanV01qXF_1x22Go7saWxJblBPgUkCWJ_zi1Dn-Xw6N8GECzk0M1xoVYMGsIWNrmHHjUCZCTilGB6cEQD0C0wBlvHLQ7yB3VChOCEfUuTZy7ejVvCzFQtac18OCK6FQu7jC-Ium6wIroeLiy4MZJtIqbUyC0embW_"
-                  alt="Calm lake audio"
-                />
-                <div className="guided-overlay" />
-                <div className="guided-content">
-                  <p>Guided Audio</p>
-                  <h4>Quick 2-min Calm</h4>
+                  {message.role === 'user' ? (
+                    <div className="message-avatar user-avatar">
+                      <span className="material-symbols-outlined">account_circle</span>
+                    </div>
+                  ) : null}
                 </div>
-              </article>
+              ))
+            )}
 
-              <article className="journal-card">
-                <span className="material-symbols-outlined">spa</span>
-                <div>
-                  <p>Journal Prompt</p>
-                  <h4>Reflection on Stillness</h4>
-                </div>
-              </article>
-            </div>
+            {pageError ? <p className="chat-feedback chat-feedback--error">{pageError}</p> : null}
+            {pageMessage ? <p className="chat-feedback chat-feedback--info">{pageMessage}</p> : null}
+            <div ref={scrollAnchorRef} />
           </div>
 
           <div className="chat-input-area">
             <div className="chat-input-wrap">
-              <textarea rows="1" placeholder="Ask Relaxa AI..." />
+              <textarea
+                rows="1"
+                placeholder="Ask Relaxa AI how you feel..."
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={handleComposerKeyDown}
+                disabled={isSending}
+              />
               <div className="input-actions">
-                <button type="button">
-                  <span className="material-symbols-outlined">mic</span>
-                </button>
-                <button type="button">
-                  <span className="material-symbols-outlined">attach_file</span>
-                </button>
-                <button type="button" className="send-btn">
-                  <span className="material-symbols-outlined">send</span>
+                <button type="button" className="send-btn" onClick={() => handleSendMessage()} disabled={isSending}>
+                  <span className="material-symbols-outlined">{isSending ? 'hourglass_top' : 'send'}</span>
                 </button>
               </div>
             </div>
             <p className="chat-disclaimer">
-              Relaxa AI can help guide your wellness journey but is not a substitute for professional health advice.
+              Relaxa AI can support your wellness journey but is not a substitute for professional medical or mental
+              health care.
             </p>
           </div>
         </main>

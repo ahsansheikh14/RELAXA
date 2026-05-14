@@ -3,6 +3,7 @@ import './AdminSectionPage.css';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { exerciseApi } from '../../services/relaxaApi.js';
+import { USER_MOOD_OPTIONS } from '../../constants/moodOptions.js';
 
 function AdminAddExercisePage() {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ function AdminAddExercisePage() {
   const [formData, setFormData] = useState({
     title: '',
     category: '',
+    targetMood: 'Calm',
     durationMinutes: 10,
     description: '',
     mediaType: 'none',
@@ -34,6 +36,7 @@ function AdminAddExercisePage() {
         setFormData({
           title: result.data?.title || '',
           category: result.data?.category || '',
+          targetMood: result.data?.targetMood || 'Calm',
           durationMinutes: result.data?.durationMinutes || 10,
           description: result.data?.description || '',
           mediaType: result.data?.mediaType || 'none',
@@ -77,6 +80,7 @@ function AdminAddExercisePage() {
         setFormData({
           title: '',
           category: '',
+          targetMood: 'Calm',
           durationMinutes: 10,
           description: '',
           mediaType: 'none',
@@ -110,13 +114,24 @@ function AdminAddExercisePage() {
               </label>
 
               <label>
-                Category
+                Exercise Category
                 <input
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
                   placeholder="Meditation"
                 />
+              </label>
+
+              <label>
+                Target User Mood
+                <select name="targetMood" value={formData.targetMood} onChange={handleInputChange}>
+                  {USER_MOOD_OPTIONS.map((mood) => (
+                    <option key={mood} value={mood}>
+                      {mood}
+                    </option>
+                  ))}
+                </select>
               </label>
 
               <label>

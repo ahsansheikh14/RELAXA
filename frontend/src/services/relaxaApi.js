@@ -60,9 +60,9 @@ export const adminApi = {
 };
 
 export const exerciseApi = {
-  list: ({ token, category = '', search = '' } = {}) =>
+  list: ({ token, category = '', targetMood = '', search = '' } = {}) =>
     request(
-      `/exercises?category=${encodeURIComponent(category)}&search=${encodeURIComponent(search)}`,
+      `/exercises?category=${encodeURIComponent(category)}&targetMood=${encodeURIComponent(targetMood)}&search=${encodeURIComponent(search)}`,
       {
         method: 'GET',
         headers: buildHeaders(token),
@@ -101,6 +101,34 @@ export const reportApi = {
     request(`/reports/mood-trends?days=${days}`, {
       method: 'GET',
       headers: buildHeaders(token),
+    }),
+};
+
+export const aiApi = {
+  recommendations: ({ token, currentMood = '', algorithm = 'a_star', limit = 3 } = {}) =>
+    request('/ai/recommendations', {
+      method: 'POST',
+      headers: buildHeaders(token),
+      body: JSON.stringify({ currentMood, algorithm, limit }),
+    }),
+
+  listConversations: ({ token } = {}) =>
+    request('/ai/conversations', {
+      method: 'GET',
+      headers: buildHeaders(token),
+    }),
+
+  getConversation: ({ token, conversationId }) =>
+    request(`/ai/conversations/${conversationId}`, {
+      method: 'GET',
+      headers: buildHeaders(token),
+    }),
+
+  chat: ({ token, message, conversationId = '' } = {}) =>
+    request('/ai/chat', {
+      method: 'POST',
+      headers: buildHeaders(token),
+      body: JSON.stringify({ message, conversationId }),
     }),
 };
 

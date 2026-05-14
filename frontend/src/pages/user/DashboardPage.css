@@ -40,6 +40,13 @@
   line-height: 1.6;
 }
 
+.dashboard-mood-note {
+  margin: 12px 0 0;
+  color: #0c5252;
+  font-size: 15px;
+  font-weight: 700;
+}
+
 .mood-section {
   margin-top: 80px;
 }

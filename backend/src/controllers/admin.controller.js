@@ -4,6 +4,7 @@ import User from '../models/user.model.js';
 import Exercise from '../models/exercise.model.js';
 import Mood from '../models/mood.model.js';
 import { ADMIN_BOOTSTRAP } from '../constants/admin.constants.js';
+import { USER_MOOD_OPTIONS } from '../constants/moods.constants.js';
 
 const JWT_EXPIRES_IN = '7d';
 
@@ -30,6 +31,7 @@ const sanitizeAdmin = (adminUser) => ({
 const sanitizeExercisePayload = (payload) => {
   const mediaType = ['none', 'link', 'video'].includes(payload.mediaType) ? payload.mediaType : 'none';
   const mediaUrl = String(payload.mediaUrl || '').trim();
+  const targetMood = String(payload.targetMood || '').trim();
 
   if (mediaType !== 'none' && !mediaUrl) {
     const err = new Error('mediaUrl is required when mediaType is link or video.');
@@ -37,9 +39,16 @@ const sanitizeExercisePayload = (payload) => {
     throw err;
   }
 
+  if (!USER_MOOD_OPTIONS.includes(targetMood)) {
+    const err = new Error(`targetMood must be one of: ${USER_MOOD_OPTIONS.join(', ')}.`);
+    err.statusCode = 400;
+    throw err;
+  }
+
   return {
     title: String(payload.title || '').trim(),
     category: String(payload.category || '').trim(),
+    targetMood,
     durationMinutes: Number(payload.durationMinutes),
     description: String(payload.description || '').trim(),
     mediaType,

@@ -3,16 +3,26 @@ import './ExercisesPage.css';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { toggleZenMode } from '../../utils/zenMode.js';
-import { exerciseApi } from '../../services/relaxaApi.js';
+import { aiApi, moodApi } from '../../services/relaxaApi.js';
 import { getExerciseVisual } from '../../utils/exerciseDisplay.js';
+import { USER_MOOD_OPTIONS } from '../../constants/moodOptions.js';
+
+const getAlgorithmLabel = (algorithm) => (algorithm === 'bfs' ? 'BFS' : 'A*');
 
 function ExercisesPage() {
   const navigate = useNavigate();
   const userToken = localStorage.getItem('relaxaToken');
-  const [exercises, setExercises] = useState([]);
+  const [currentMood, setCurrentMood] = useState(localStorage.getItem('relaxaCurrentMood') || '');
+  const [allExercises, setAllExercises] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [aiSummary, setAiSummary] = useState({
+    algorithmUsed: 'a_star',
+    goalMood: '',
+    bfsSteps: 0,
+    aStarSteps: 0,
+  });
 
   useEffect(() => {
     const loadExercises = async () => {
@@ -25,8 +35,32 @@ function ExercisesPage() {
       try {
         setLoading(true);
         setLoadError('');
-        const result = await exerciseApi.list({ token: userToken, search });
-        setExercises(Array.isArray(result.data) ? result.data : []);
+        const historyResult = await moodApi.history({ token: userToken, limit: 1 });
+        const latestMood = historyResult.moods?.[0]?.mood || localStorage.getItem('relaxaCurrentMood') || '';
+
+        if (!USER_MOOD_OPTIONS.includes(latestMood)) {
+          setCurrentMood('');
+          setAllExercises([]);
+          setLoadError('Choose your mood on the dashboard first to see exercises matched to that mood.');
+          return;
+        }
+
+        setCurrentMood(latestMood);
+        localStorage.setItem('relaxaCurrentMood', latestMood);
+
+        const result = await aiApi.recommendations({
+          token: userToken,
+          currentMood: latestMood,
+          algorithm: 'a_star',
+          limit: 12,
+        });
+        setAllExercises(Array.isArray(result.data?.recommendedExercises) ? result.data.recommendedExercises : []);
+        setAiSummary({
+          algorithmUsed: result.data?.algorithmUsed || 'a_star',
+          goalMood: result.data?.goalMood || '',
+          bfsSteps: result.data?.bfs?.totalSteps || 0,
+          aStarSteps: result.data?.aStar?.totalSteps || 0,
+        });
       } catch (error) {
         setLoadError(error.message);
       } finally {
@@ -35,7 +69,22 @@ function ExercisesPage() {
     };
 
     loadExercises();
-  }, [search, userToken]);
+  }, [userToken]);
+
+  const exercises = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) {
+      return allExercises;
+    }
+
+    return allExercises.filter((exercise) =>
+      [exercise.title, exercise.description, exercise.category].some((value) =>
+        String(value || '')
+          .toLowerCase()
+          .includes(query)
+      )
+    );
+  }, [allExercises, search]);
 
   const mediaReadyCount = useMemo(
     () => exercises.filter((exercise) => exercise.mediaType === 'link' || exercise.mediaType === 'video').length,
@@ -90,9 +139,16 @@ function ExercisesPage() {
             <span>Mindfulness Library</span>
             <h1>Daily Exercises</h1>
             <p>
-              Take a moment for yourself. Choose a journey that resonates with your current state of being and let us
-              guide you back to center.
+              {currentMood
+                ? `Showing AI-picked exercises matched to your current mood: ${currentMood}.`
+                : 'Choose your mood on the dashboard and your matching exercises will appear here.'}
             </p>
+            {currentMood && (
+              <p className="exercise-ai-note">
+                Using {getAlgorithmLabel(aiSummary.algorithmUsed)} toward {aiSummary.goalMood || 'Calm'}.
+                BFS path steps: {aiSummary.bfsSteps} | A* path steps: {aiSummary.aStarSteps}
+              </p>
+            )}
             <div className="exercise-search">
               <span className="material-symbols-outlined">search</span>
               <input
@@ -143,9 +199,11 @@ function ExercisesPage() {
             <div className="integration-content">
               <h3>Deep Breath Integration</h3>
               <p>
-                {mediaReadyCount
-                  ? `${mediaReadyCount} exercise sessions now include video or guided links from the admin library.`
-                  : 'As your admin uploads new guided sessions, they will appear here automatically.'}
+                {currentMood
+                  ? mediaReadyCount
+                    ? `${mediaReadyCount} ${currentMood.toLowerCase()} mood AI recommendations include video or guided links.`
+                    : `Your ${currentMood.toLowerCase()} mood AI recommendations are text-based for now.`
+                  : 'As your admin uploads mood-targeted sessions, AI recommendations will appear here automatically.'}
               </p>
               <button type="button" onClick={toggleZenMode}>Explore Zen Mode</button>
             </div>
