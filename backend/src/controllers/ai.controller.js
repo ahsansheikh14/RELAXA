@@ -209,6 +209,7 @@ const chatWithAssistant = async (req, res, next) => {
       conversationSummary: toConversationSummary(conversation),
       assistantMessage: toMessageResponse(conversation.messages[conversation.messages.length - 1]),
       provider: assistantReply.provider,
+      chatLimitReached: Boolean(assistantReply.chatLimitReached),
     });
   } catch (err) {
     return next(err);

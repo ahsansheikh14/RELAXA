@@ -404,6 +404,35 @@
   color: #0c5252;
 }
 
+.chat-limit-cta {
+  max-width: 840px;
+  margin: 0 auto;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid #e8d4b8;
+  background: #fff8ef;
+  text-align: center;
+}
+
+.chat-limit-cta p {
+  margin: 0 0 12px;
+  color: #6b4f2d;
+  font-size: 14px;
+}
+
+.chat-exercises-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #0c5252;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
 .chat-zen-fab {
   position: fixed;
   right: 12px;

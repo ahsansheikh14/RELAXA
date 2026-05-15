@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import UserNavbar from '../../components/UserNavbar';
 import { aiApi } from '../../services/relaxaApi.js';
 import { toggleZenMode } from '../../utils/zenMode.js';
@@ -32,6 +32,7 @@ function ChatPage() {
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [isConversationLoading, setIsConversationLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [chatLimitReached, setChatLimitReached] = useState(false);
 
   const starterPrompts = useMemo(() => STARTER_PROMPTS, []);
 
@@ -47,6 +48,11 @@ function ChatPage() {
         const response = await aiApi.getConversation({ token, conversationId });
         setActiveConversationId(response.conversation.id);
         setMessages(response.conversation.messages || []);
+        setChatLimitReached(
+          response.conversation.messages?.some((message) =>
+            String(message.content || '').includes('Relaxa AI chat limit has been reached')
+          )
+        );
       } catch (error) {
         setPageError(error.message);
       } finally {
@@ -97,6 +103,7 @@ function ChatPage() {
     setDraft('');
     setPageError('');
     setPageMessage('New chat ready. Tell Relaxa how you feel.');
+    setChatLimitReached(false);
   };
 
   const handleSendMessage = async (presetMessage = '') => {
@@ -138,6 +145,7 @@ function ChatPage() {
 
       setActiveConversationId(response.conversation.id);
       setMessages(response.conversation.messages || []);
+      setChatLimitReached(Boolean(response.chatLimitReached));
       setConversations((prev) => upsertConversationSummary(prev, response.conversationSummary));
     } catch (error) {
       setMessages((prev) => prev.filter((message) => !message.isTemporary && message.id !== tempUserMessage.id));
@@ -269,6 +277,16 @@ function ChatPage() {
               ))
             )}
 
+            {chatLimitReached ? (
+              <div className="chat-limit-cta">
+                <p>AI chat is temporarily unavailable.</p>
+                <Link to="/exercises" className="chat-exercises-link">
+                  <span className="material-symbols-outlined">self_improvement</span>
+                  Go to Exercises
+                </Link>
+              </div>
+            ) : null}
+
             {pageError ? <p className="chat-feedback chat-feedback--error">{pageError}</p> : null}
             {pageMessage ? <p className="chat-feedback chat-feedback--info">{pageMessage}</p> : null}
             <div ref={scrollAnchorRef} />
@@ -278,14 +296,21 @@ function ChatPage() {
             <div className="chat-input-wrap">
               <textarea
                 rows="1"
-                placeholder="Ask Relaxa AI how you feel..."
+                placeholder={
+                  chatLimitReached ? 'AI chat limit reached — try Exercises or come back later' : 'Ask Relaxa AI how you feel...'
+                }
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={handleComposerKeyDown}
-                disabled={isSending}
+                disabled={isSending || chatLimitReached}
               />
               <div className="input-actions">
-                <button type="button" className="send-btn" onClick={() => handleSendMessage()} disabled={isSending}>
+                <button
+                  type="button"
+                  className="send-btn"
+                  onClick={() => handleSendMessage()}
+                  disabled={isSending || chatLimitReached}
+                >
                   <span className="material-symbols-outlined">{isSending ? 'hourglass_top' : 'send'}</span>
                 </button>
               </div>
