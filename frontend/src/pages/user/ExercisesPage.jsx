@@ -7,8 +7,6 @@ import { aiApi, moodApi } from '../../services/relaxaApi.js';
 import { getExerciseVisual } from '../../utils/exerciseDisplay.js';
 import { USER_MOOD_OPTIONS } from '../../constants/moodOptions.js';
 
-const getAlgorithmLabel = (algorithm) => (algorithm === 'bfs' ? 'BFS' : 'A*');
-
 function ExercisesPage() {
   const navigate = useNavigate();
   const userToken = localStorage.getItem('relaxaToken');
@@ -17,12 +15,6 @@ function ExercisesPage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
-  const [aiSummary, setAiSummary] = useState({
-    algorithmUsed: 'a_star',
-    goalMood: '',
-    bfsSteps: 0,
-    aStarSteps: 0,
-  });
 
   useEffect(() => {
     const loadExercises = async () => {
@@ -55,12 +47,6 @@ function ExercisesPage() {
           limit: 12,
         });
         setAllExercises(Array.isArray(result.data?.recommendedExercises) ? result.data.recommendedExercises : []);
-        setAiSummary({
-          algorithmUsed: result.data?.algorithmUsed || 'a_star',
-          goalMood: result.data?.goalMood || '',
-          bfsSteps: result.data?.bfs?.totalSteps || 0,
-          aStarSteps: result.data?.aStar?.totalSteps || 0,
-        });
       } catch (error) {
         setLoadError(error.message);
       } finally {
@@ -140,15 +126,9 @@ function ExercisesPage() {
             <h1>Daily Exercises</h1>
             <p>
               {currentMood
-                ? `Showing AI-picked exercises matched to your current mood: ${currentMood}.`
+                ? `Personalized exercises for your current mood: ${currentMood}.`
                 : 'Choose your mood on the dashboard and your matching exercises will appear here.'}
             </p>
-            {currentMood && (
-              <p className="exercise-ai-note">
-                Using {getAlgorithmLabel(aiSummary.algorithmUsed)} toward {aiSummary.goalMood || 'Calm'}.
-                BFS path steps: {aiSummary.bfsSteps} | A* path steps: {aiSummary.aStarSteps}
-              </p>
-            )}
             <div className="exercise-search">
               <span className="material-symbols-outlined">search</span>
               <input
@@ -201,9 +181,9 @@ function ExercisesPage() {
               <p>
                 {currentMood
                   ? mediaReadyCount
-                    ? `${mediaReadyCount} ${currentMood.toLowerCase()} mood AI recommendations include video or guided links.`
-                    : `Your ${currentMood.toLowerCase()} mood AI recommendations are text-based for now.`
-                  : 'As your admin uploads mood-targeted sessions, AI recommendations will appear here automatically.'}
+                    ? `${mediaReadyCount} ${currentMood.toLowerCase()} mood sessions include video or guided links.`
+                    : `Your ${currentMood.toLowerCase()} mood sessions are text-based for now.`
+                  : 'As your admin uploads mood-targeted sessions, they will appear here automatically.'}
               </p>
               <button type="button" onClick={toggleZenMode}>Explore Zen Mode</button>
             </div>

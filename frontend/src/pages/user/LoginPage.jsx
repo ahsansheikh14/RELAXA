@@ -97,8 +97,15 @@ function LoginPage() {
       if (!response.ok) {
         throw new Error(result.message || 'Unable to process forgot password.');
       }
-      setInfoMessage(result.message || 'Password reset instructions sent.');
-      setResetLink(result.resetLink || '');
+      if (result.resetLink) {
+        setInfoMessage(
+          'Email is not configured on the server yet. Use this secure reset link for local testing (valid 15 minutes):'
+        );
+        setResetLink(result.resetLink);
+      } else {
+        setInfoMessage(result.message || 'If this email exists, a password reset link has been sent.');
+        setResetLink('');
+      }
     } catch (error) {
       setErrorMessage(error.message === 'Failed to fetch' ? 'Backend is not reachable. Start the backend server first.' : error.message);
     }

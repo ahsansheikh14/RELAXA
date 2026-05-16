@@ -27,9 +27,15 @@ const sanitizeUser = (user) => ({
   role: user.role,
 });
 
+const isSmtpValueSet = (value = '') => {
+  const normalized = String(value).trim();
+  return Boolean(normalized) && !normalized.toLowerCase().includes('replace_with');
+};
+
 const getMailTransporter = () => {
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
-  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
+
+  if (!isSmtpValueSet(SMTP_HOST) || !isSmtpValueSet(SMTP_PORT) || !isSmtpValueSet(SMTP_USER) || !isSmtpValueSet(SMTP_PASS)) {
     return null;
   }
   return nodemailer.createTransport({

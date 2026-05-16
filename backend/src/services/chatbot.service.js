@@ -1,5 +1,15 @@
-const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
 const GEMINI_API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+
+const GEMINI_MODEL_FALLBACKS = [
+  process.env.GEMINI_MODEL,
+  'gemini-2.0-flash',
+  'gemini-2.5-flash',
+  'gemini-2.0-flash-lite',
+  'gemini-2.5-flash-lite',
+].filter(Boolean);
+
+const getGeminiModelsToTry = () => [...new Set(GEMINI_MODEL_FALLBACKS)];
 
 export const CHAT_LIMIT_REACHED_MESSAGE =
   "Relaxa AI chat limit has been reached for now. Please try again later. In the meantime, you can ease yourself by exploring the Exercises section — breathing, grounding, and mood-based activities are ready for you there.";
@@ -37,8 +47,31 @@ const isPlaceholderKey = (value = '') => {
   return !normalized || normalized.includes('replace_with_') || normalized.includes('your_');
 };
 
-const isQuotaLimitError = (message = '') =>
-  /quota|rate.?limit|resource.?exhaust|limit reached|exceeded|too many requests|429/i.test(message);
+const isQuotaLimitError = (status, message = '') => {
+  const normalized = String(message).toLowerCase();
+
+  if (status === 429) {
+    return true;
+  }
+
+  return (
+    normalized.includes('quota') ||
+    normalized.includes('rate limit') ||
+    normalized.includes('rate_limit') ||
+    normalized.includes('resource exhausted') ||
+    normalized.includes('resource_exhausted') ||
+    normalized.includes('too many requests')
+  );
+};
+
+const isModelNotFoundError = (message = '') => {
+  const normalized = String(message).toLowerCase();
+  return (
+    normalized.includes('not found') ||
+    normalized.includes('not supported') ||
+    normalized.includes('listmodels')
+  );
+};
 
 const normalizeMessages = (messages = []) =>
   messages
@@ -54,29 +87,24 @@ const mapMessagesToGeminiContents = (messages) =>
     parts: [{ text: message.content }],
   }));
 
+const mapMessagesToOpenAi = (messages) => [
+  { role: 'system', content: SYSTEM_PROMPT },
+  ...messages.map((message) => ({
+    role: message.role === 'assistant' ? 'assistant' : 'user',
+    content: message.content,
+  })),
+];
+
 const parseGeminiReply = (payload) => {
   const parts = payload?.candidates?.[0]?.content?.parts || [];
-  const text = parts
+  return parts
     .map((part) => part?.text || '')
     .join('\n')
     .trim();
-
-  return text;
 };
 
-const generateChatReply = async (messages) => {
-  const geminiApiKey = process.env.GEMINI_API_KEY;
-  const normalizedMessages = normalizeMessages(messages).slice(-12);
-
-  if (!normalizedMessages.length) {
-    throw createHttpError('At least one user message is required to generate a chat reply.', 400);
-  }
-
-  if (isPlaceholderKey(geminiApiKey)) {
-    throw createHttpError('AI chat is not configured yet. Add GEMINI_API_KEY in backend/.env to enable Relaxa AI.', 503);
-  }
-
-  const response = await fetch(`${GEMINI_API_BASE_URL}/${DEFAULT_GEMINI_MODEL}:generateContent?key=${geminiApiKey}`, {
+const requestGeminiReply = async ({ model, geminiApiKey, normalizedMessages }) => {
+  const response = await fetch(`${GEMINI_API_BASE_URL}/${model}:generateContent?key=${geminiApiKey}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -102,33 +130,171 @@ const generateChatReply = async (messages) => {
     payload = null;
   }
 
-  if (!response.ok) {
-    const providerMessage = payload?.error?.message || 'Gemini request failed.';
+  return {
+    ok: response.ok,
+    status: response.status,
+    payload,
+    providerMessage: payload?.error?.message || 'Gemini request failed.',
+  };
+};
 
-    if (isQuotaLimitError(providerMessage)) {
+const requestOpenAiReply = async ({ openAiApiKey, normalizedMessages }) => {
+  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+
+  const response = await fetch(OPENAI_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${openAiApiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: mapMessagesToOpenAi(normalizedMessages),
+      temperature: 0.8,
+      max_tokens: 700,
+    }),
+  });
+
+  let payload = null;
+
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
+
+  const text = payload?.choices?.[0]?.message?.content?.trim() || '';
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    text,
+    model,
+    providerMessage: payload?.error?.message || 'OpenAI request failed.',
+  };
+};
+
+const tryGeminiReply = async ({ geminiApiKey, normalizedMessages }) => {
+  const modelsToTry = getGeminiModelsToTry();
+  let lastErrorMessage = 'Gemini request failed.';
+  let sawQuotaError = false;
+
+  for (const model of modelsToTry) {
+    const result = await requestGeminiReply({ model, geminiApiKey, normalizedMessages });
+
+    if (result.ok) {
+      const replyText = parseGeminiReply(result.payload);
+
+      if (!replyText) {
+        throw createHttpError('Gemini returned an empty response. Please try again.', 502);
+      }
+
+      return {
+        text: replyText,
+        provider: 'gemini',
+        model,
+        chatLimitReached: false,
+      };
+    }
+
+    lastErrorMessage = result.providerMessage;
+
+    if (isQuotaLimitError(result.status, result.providerMessage)) {
+      sawQuotaError = true;
+      continue;
+    }
+
+    if (isModelNotFoundError(result.providerMessage)) {
+      continue;
+    }
+
+    throw createHttpError(result.providerMessage, result.status || 502);
+  }
+
+  return { sawQuotaError, lastErrorMessage };
+};
+
+const tryOpenAiReply = async ({ openAiApiKey, normalizedMessages }) => {
+  const result = await requestOpenAiReply({ openAiApiKey, normalizedMessages });
+
+  if (result.ok && result.text) {
+    return {
+      text: result.text,
+      provider: 'openai',
+      model: result.model,
+      chatLimitReached: false,
+    };
+  }
+
+  return {
+    ok: false,
+    providerMessage: result.providerMessage,
+    isQuota: isQuotaLimitError(result.status, result.providerMessage),
+  };
+};
+
+const generateChatReply = async (messages) => {
+  const geminiApiKey = process.env.GEMINI_API_KEY;
+  const openAiApiKey = process.env.OPENAI_API_KEY;
+  const normalizedMessages = normalizeMessages(messages).slice(-12);
+
+  if (!normalizedMessages.length) {
+    throw createHttpError('At least one user message is required to generate a chat reply.', 400);
+  }
+
+  if (!isPlaceholderKey(geminiApiKey)) {
+    const geminiResult = await tryGeminiReply({ geminiApiKey, normalizedMessages });
+
+    if (geminiResult.text) {
+      return geminiResult;
+    }
+
+    if (geminiResult.sawQuotaError && !isPlaceholderKey(openAiApiKey)) {
+      const openAiResult = await tryOpenAiReply({ openAiApiKey, normalizedMessages });
+
+      if (openAiResult.text) {
+        return openAiResult;
+      }
+    }
+
+    if (geminiResult.sawQuotaError) {
       return {
         text: CHAT_LIMIT_REACHED_MESSAGE,
         provider: 'limit-notice',
-        model: DEFAULT_GEMINI_MODEL,
+        model: 'none',
         chatLimitReached: true,
       };
     }
 
-    throw createHttpError(providerMessage, response.status || 502);
+    throw createHttpError(
+      `No supported Gemini model is available. Last error: ${geminiResult.lastErrorMessage}. Set GEMINI_MODEL=gemini-2.0-flash in backend/.env`,
+      502
+    );
   }
 
-  const replyText = parseGeminiReply(payload);
+  if (!isPlaceholderKey(openAiApiKey)) {
+    const openAiResult = await tryOpenAiReply({ openAiApiKey, normalizedMessages });
 
-  if (!replyText) {
-    throw createHttpError('Gemini returned an empty response. Please try again.', 502);
+    if (openAiResult.text) {
+      return openAiResult;
+    }
+
+    if (openAiResult.isQuota) {
+      return {
+        text: CHAT_LIMIT_REACHED_MESSAGE,
+        provider: 'limit-notice',
+        model: 'none',
+        chatLimitReached: true,
+      };
+    }
+
+    throw createHttpError(openAiResult.providerMessage, 502);
   }
 
-  return {
-    text: replyText,
-    provider: 'gemini',
-    model: DEFAULT_GEMINI_MODEL,
-    chatLimitReached: false,
-  };
+  throw createHttpError(
+    'AI chat is not configured yet. Add GEMINI_API_KEY or OPENAI_API_KEY in backend/.env.',
+    503
+  );
 };
 
 export { generateChatReply };

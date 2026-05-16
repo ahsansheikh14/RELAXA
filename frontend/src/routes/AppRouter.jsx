@@ -11,6 +11,8 @@ import AdminContentPage from '../pages/admin/AdminContentPage';
 import AdminAnalyticsPage from '../pages/admin/AdminAnalyticsPage';
 import AdminAddExercisePage from '../pages/admin/AdminAddExercisePage';
 import AdminProtectedRoute from '../components/AdminProtectedRoute';
+import UserProtectedRoute from '../components/UserProtectedRoute';
+import NotFoundPage from '../pages/NotFoundPage';
 
 function AppRouter() {
   return (
@@ -18,11 +20,14 @@ function AppRouter() {
       <Route path="/" element={<Navigate to="/login" replace />} />
 
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/exercises" element={<ExercisesPage />} />
-      <Route path="/reports" element={<ReportsPage />} />
-      <Route path="/chat" element={<ChatPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+      <Route element={<UserProtectedRoute />}>
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/exercises" element={<ExercisesPage />} />
+        <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/chat" element={<ChatPage />} />
+      </Route>
 
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route element={<AdminProtectedRoute />}>
@@ -33,7 +38,7 @@ function AppRouter() {
         <Route path="/admin/exercises/:id/edit" element={<AdminAddExercisePage />} />
       </Route>
 
-      <Route path="*" element={<p>404 - Page not found</p>} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
