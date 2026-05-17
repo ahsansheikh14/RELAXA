@@ -1,6 +1,6 @@
- import './LoginPage.css';
+import './LoginPage.css';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { API_BASE_URL, setUserToken } from '../../utils/auth.js';
 
 function LoginPage() {
@@ -33,6 +33,13 @@ function LoginPage() {
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFormSubmit = (event) => {
+    event.preventDefault();
+    if (!isSubmitting) {
+      handleAuthSubmit();
+    }
   };
 
   const handleAuthSubmit = async () => {
@@ -78,36 +85,58 @@ function LoginPage() {
     }
   };
 
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim());
+
   const handleForgotPassword = async () => {
     setErrorMessage('');
     setInfoMessage('');
     setResetLink('');
-    if (!formData.email.trim()) {
+
+    const email = formData.email.trim();
+
+    if (!email) {
       setErrorMessage('Please enter your email first.');
       return;
     }
+
+    if (!isValidEmail(email)) {
+      setErrorMessage('Please enter a valid email address.');
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email.trim() }),
+        body: JSON.stringify({ email }),
       });
       const result = await response.json();
+
+      if (response.status === 404 || result.emailExists === false) {
+        setErrorMessage(result.message || 'This email is not registered. Please sign up first.');
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(result.message || 'Unable to process forgot password.');
       }
+
       if (result.resetLink) {
         setInfoMessage(
-          'Email is not configured on the server yet. Use this secure reset link for local testing (valid 15 minutes):'
+          result.message ||
+            'Your email is registered. Click the button below to reset your password (valid 15 minutes).'
         );
         setResetLink(result.resetLink);
       } else {
-        setInfoMessage(result.message || 'If this email exists, a password reset link has been sent.');
+        setInfoMessage(result.message || 'Password reset link has been sent to your registered email.');
         setResetLink('');
       }
     } catch (error) {
       setErrorMessage(error.message === 'Failed to fetch' ? 'Backend is not reachable. Start the backend server first.' : error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -141,6 +170,7 @@ function LoginPage() {
               </button>
             </div>
 
+            <form className="auth-form" onSubmit={handleFormSubmit}>
             {activeTab === 'signup' && (
               <div className="form-group">
                 <label className="form-label" htmlFor="name">
@@ -216,13 +246,14 @@ function LoginPage() {
             {infoMessage && <p className="auth-info">{infoMessage}</p>}
             {resetLink && (
               <a className="auth-reset-link" href={resetLink}>
-                Open password reset page
+                Reset password now
               </a>
             )}
 
-            <button className="submit-btn" type="button" onClick={handleAuthSubmit} disabled={isSubmitting}>
+            <button className="submit-btn" type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Please wait...' : 'Enter Sanctuary'}
             </button>
+            </form>
 
           </div>
         </div>
@@ -249,6 +280,10 @@ function LoginPage() {
             <p className="reflection-sub">"Calm is a superpower."</p>
           </div>
         </div>
+
+        <p className="login-admin-portal">
+          Administrator? <Link to="/admin/login">Admin portal</Link>
+        </p>
       </footer>
 
       <img

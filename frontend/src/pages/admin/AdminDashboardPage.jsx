@@ -17,31 +17,59 @@ function AdminDashboardPage() {
   const [search, setSearch] = useState('');
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0, limit: 10 });
   const [isLoading, setIsLoading] = useState(true);
+  const [deletingUserId, setDeletingUserId] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
+
+  const loadDashboard = async () => {
+    try {
+      setIsLoading(true);
+      setErrorMessage('');
+
+      const [summaryResult, usersResult] = await Promise.all([
+        adminApi.getAnalyticsSummary({ token: adminToken }),
+        adminApi.getUsers({ token: adminToken, page, limit: 10, search }),
+      ]);
+
+      setSummary(summaryResult.data || {});
+      setUsers(usersResult.data || []);
+      setPagination(usersResult.pagination || { page: 1, totalPages: 1, total: 0, limit: 10 });
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadDashboard = async () => {
-      try {
-        setIsLoading(true);
-        setErrorMessage('');
-
-        const [summaryResult, usersResult] = await Promise.all([
-          adminApi.getAnalyticsSummary({ token: adminToken }),
-          adminApi.getUsers({ token: adminToken, page, limit: 10, search }),
-        ]);
-
-        setSummary(summaryResult.data || {});
-        setUsers(usersResult.data || []);
-        setPagination(usersResult.pagination || { page: 1, totalPages: 1, total: 0, limit: 10 });
-      } catch (error) {
-        setErrorMessage(error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadDashboard();
   }, [adminToken, page, search]);
+
+  const handleDeleteUser = async (user) => {
+    if (user.role === 'admin') {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete ${user.name} (${user.email})? This will also remove their mood logs and AI chat history.`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingUserId(user._id);
+      setErrorMessage('');
+      setInfoMessage('');
+      await adminApi.deleteUser({ token: adminToken, userId: user._id });
+      setInfoMessage('User deleted successfully.');
+      await loadDashboard();
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setDeletingUserId('');
+    }
+  };
 
   return (
     <div className="admin-dashboard">
@@ -135,6 +163,7 @@ function AdminDashboardPage() {
           </div>
 
           {errorMessage && <p className="admin-inline-error">{errorMessage}</p>}
+          {infoMessage && <p className="admin-inline-success">{infoMessage}</p>}
 
           <div className="table-wrap">
             <table>
@@ -144,12 +173,13 @@ function AdminDashboardPage() {
                   <th>Role</th>
                   <th>Joined</th>
                   <th>Access</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan="4" className="admin-table-empty">
+                    <td colSpan="5" className="admin-table-empty">
                       Loading users...
                     </td>
                   </tr>
@@ -174,11 +204,26 @@ function AdminDashboardPage() {
                           {user.role === 'admin' ? 'Admin' : 'User'}
                         </span>
                       </td>
+                      <td className="action-cell">
+                        {user.role === 'admin' ? (
+                          <span className="action-muted">Protected</span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="danger-btn table-danger-btn"
+                            disabled={deletingUserId === user._id}
+                            onClick={() => handleDeleteUser(user)}
+                          >
+                            <span className="material-symbols-outlined">delete</span>
+                            {deletingUserId === user._id ? 'Deleting...' : 'Delete'}
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" className="admin-table-empty">
+                    <td colSpan="5" className="admin-table-empty">
                       No users found for this search.
                     </td>
                   </tr>

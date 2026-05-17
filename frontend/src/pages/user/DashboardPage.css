@@ -403,39 +403,6 @@
   font-size: 20px;
 }
 
-.chat-live {
-  margin-top: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  position: relative;
-  z-index: 1;
-}
-
-.chat-live p {
-  margin: 0;
-  font-size: 14px;
-  color: #9f9c99;
-}
-
-.chat-live-avatars {
-  display: flex;
-}
-
-.chat-live-avatars img {
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  border: 2px solid #ffffff;
-  object-fit: cover;
-  margin-left: -8px;
-}
-
-.chat-live-avatars img:first-child {
-  margin-left: 0;
-}
-
 .zen-floating-btn {
   position: fixed;
   right: 24px;

@@ -61,6 +61,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+.icon-btn.active {
+  color: #0c5252;
+  background: #eaf5f2;
+  border-radius: 8px;
 }
 
 .icon-btn .material-symbols-outlined {
@@ -77,14 +84,159 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border-radius: 8px;
+}
+
+.avatar-btn.active {
+  background: #eaf5f2;
 }
 
 .avatar-btn .material-symbols-outlined {
   font-size: 26px;
 }
 
+.notifications-wrap,
 .user-menu-wrap {
   position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #b3261e;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.notifications-panel {
+  position: absolute;
+  top: 42px;
+  right: 0;
+  width: 340px;
+  max-width: calc(100vw - 24px);
+  max-height: 420px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #e4e2e2;
+  border-radius: 12px;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+  z-index: 40;
+}
+
+.notifications-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid #ecefef;
+}
+
+.notifications-panel__head h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #1b1c1c;
+}
+
+.notifications-panel__head button {
+  border: none;
+  background: transparent;
+  color: #5f6969;
+  cursor: pointer;
+  display: inline-flex;
+}
+
+.notifications-panel__state {
+  margin: 0;
+  padding: 16px 14px;
+  color: #6c7a7a;
+  font-size: 14px;
+}
+
+.notifications-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  overflow-y: auto;
+  display: grid;
+  gap: 6px;
+}
+
+.notification-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f8fafa;
+  border: 1px solid #e8eeee;
+}
+
+.notification-item.unread {
+  background: #eef8f5;
+  border-color: #c9e4df;
+}
+
+.notification-item__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #d9eeea;
+  color: #0c5252;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notification-item__icon .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.notification-item__body {
+  min-width: 0;
+}
+
+.notification-item__body strong {
+  display: block;
+  font-size: 13px;
+  color: #1f3536;
+  margin-bottom: 4px;
+}
+
+.notification-item__body p {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #6c7a7a;
+}
+
+.notification-item__body button {
+  border: none;
+  background: transparent;
+  color: #0c5252;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.navbar-dismiss-overlay {
+  position: fixed;
+  inset: 0;
+  border: none;
+  background: transparent;
+  z-index: 25;
+  cursor: default;
 }
 
 .user-menu {
@@ -93,10 +245,47 @@
   right: 0;
   background: #ffffff;
   border: 1px solid #e4e2e2;
-  border-radius: 8px;
+  border-radius: 12px;
   min-width: 120px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
   overflow: hidden;
+  z-index: 40;
+}
+
+.user-menu--profile {
+  width: 300px;
+  max-width: calc(100vw - 24px);
+  padding: 8px;
+}
+
+.user-menu__profile-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 4px;
+}
+
+.user-menu__profile-head > .material-symbols-outlined {
+  font-size: 34px;
+  color: #315f60;
+}
+
+.user-menu__profile-head strong {
+  display: block;
+  font-size: 14px;
+  color: #1f3536;
+}
+
+.user-menu__profile-head span {
+  display: block;
+  font-size: 12px;
+  color: #6c7a7a;
+  margin-top: 2px;
+  word-break: break-word;
+}
+
+.profile-details-card--menu {
+  margin: 6px 0 8px;
 }
 
 .user-menu button {
@@ -235,10 +424,15 @@
   gap: 10px;
 }
 
-.profile-details-card p {
+.profile-details-card p,
+.profile-details-card__state {
   margin: 0;
   color: #516262;
   font-size: 14px;
+}
+
+.user-menu button.danger {
+  color: #b3261e;
 }
 
 .profile-detail-row {

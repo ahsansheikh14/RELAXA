@@ -1,8 +1,8 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import nodemailer from 'nodemailer';
 import User from '../models/user.model.js';
+import { sendPasswordResetEmail } from '../services/mail.service.js';
 
 const JWT_EXPIRES_IN = '7d';
 
@@ -27,32 +27,12 @@ const sanitizeUser = (user) => ({
   role: user.role,
 });
 
-const isSmtpValueSet = (value = '') => {
-  const normalized = String(value).trim();
-  return Boolean(normalized) && !normalized.toLowerCase().includes('replace_with');
-};
-
-const getMailTransporter = () => {
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
-
-  if (!isSmtpValueSet(SMTP_HOST) || !isSmtpValueSet(SMTP_PORT) || !isSmtpValueSet(SMTP_USER) || !isSmtpValueSet(SMTP_PASS)) {
-    return null;
-  }
-  return nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: Number(SMTP_PORT),
-    secure: Number(SMTP_PORT) === 465,
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-  });
-};
-
 const buildResetLink = (email, rawToken) => {
   const frontendBaseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
   return `${frontendBaseUrl}/reset-password?token=${rawToken}&email=${encodeURIComponent(email)}`;
 };
+
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim());
 
 const registerUser = async (req, res, next) => {
   try {
@@ -130,16 +110,24 @@ const forgotPassword = async (req, res, next) => {
     const { email } = req.body;
 
     if (!email) {
-      return res.status(400).json({ message: 'email is required.' });
+      return res.status(400).json({ message: 'Email is required.' });
     }
 
     const normalizedEmail = String(email).trim().toLowerCase();
+
+    if (!isValidEmail(normalizedEmail)) {
+      return res.status(400).json({
+        message: 'Please enter a valid email address.',
+        emailExists: false,
+      });
+    }
+
     const user = await User.findOne({ email: normalizedEmail });
 
-    // Always return a generic success response to avoid account enumeration.
     if (!user) {
-      return res.status(200).json({
-        message: 'If this email exists, a reset link has been sent.',
+      return res.status(404).json({
+        message: 'This email is not registered. Please sign up or use the correct email.',
+        emailExists: false,
       });
     }
 
@@ -151,32 +139,31 @@ const forgotPassword = async (req, res, next) => {
     await user.save();
 
     const resetLink = buildResetLink(normalizedEmail, rawToken);
-    const transporter = getMailTransporter();
 
-    if (!transporter) {
-      if (process.env.NODE_ENV !== 'production') {
+    try {
+      await sendPasswordResetEmail({ to: normalizedEmail, resetLink });
+
+      return res.status(200).json({
+        message: 'Password reset link has been sent to your registered email.',
+        emailExists: true,
+      });
+    } catch (mailError) {
+      const mailHint = mailError?.message || 'Email delivery failed';
+      const allowOnScreenLink = process.env.NODE_ENV !== 'production' || process.env.ALLOW_RESET_LINK_FALLBACK === 'true';
+
+      if (allowOnScreenLink) {
         return res.status(200).json({
-          message: 'Email service is not configured, so a temporary reset link was generated for local testing.',
+          message: `Email could not be sent (${mailHint}). Use the reset link below (valid 15 minutes).`,
+          emailExists: true,
           resetLink,
         });
       }
 
       return res.status(503).json({
-        message: 'Password reset email service is not configured yet.',
+        message: 'Could not send reset email. Try again later or contact support.',
+        emailExists: true,
       });
     }
-
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to: normalizedEmail,
-      subject: 'Relaxa Password Reset',
-      text: `Reset your password using this secure link (valid for 15 minutes): ${resetLink}`,
-      html: `<p>Reset your password using this secure link (valid for 15 minutes):</p><p><a href="${resetLink}">${resetLink}</a></p>`,
-    });
-
-    return res.status(200).json({
-      message: 'If this email exists, a reset link has been sent.',
-    });
   } catch (err) {
     return next(err);
   }

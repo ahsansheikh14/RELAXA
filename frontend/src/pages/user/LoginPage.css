@@ -306,6 +306,23 @@
   z-index: 2;
 }
 
+.login-admin-portal {
+  margin: 20px 0 0;
+  color: #707978;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.login-admin-portal a {
+  color: #0c5252;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.login-admin-portal a:hover {
+  text-decoration: underline;
+}
+
 .terms {
   margin: 0;
   color: #3f4848;

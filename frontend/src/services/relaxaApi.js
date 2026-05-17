@@ -46,6 +46,12 @@ export const adminApi = {
       headers: buildHeaders(token),
     }),
 
+  deleteUser: ({ token, userId } = {}) =>
+    request(`/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: buildHeaders(token),
+    }),
+
   getAnalyticsSummary: ({ token } = {}) =>
     request('/admin/analytics/summary', {
       method: 'GET',
@@ -129,6 +135,14 @@ export const aiApi = {
       method: 'POST',
       headers: buildHeaders(token),
       body: JSON.stringify({ message, conversationId }),
+    }),
+};
+
+export const userApi = {
+  getMe: ({ token } = {}) =>
+    request('/users/me', {
+      method: 'GET',
+      headers: buildHeaders(token),
     }),
 };
 

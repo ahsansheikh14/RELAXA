@@ -270,14 +270,6 @@ function ReportsPage() {
                   ).toLocaleDateString()}.`
                 : loadError || 'Log your mood from the dashboard to populate your latest check-in.'}
             </p>
-            <div className="users-compare">
-              <div className="color-dots">
-                <i />
-                <i />
-                <i />
-              </div>
-              <small>Compared to 1,200 users</small>
-            </div>
           </article>
 
           <article className="reports-card small-card">

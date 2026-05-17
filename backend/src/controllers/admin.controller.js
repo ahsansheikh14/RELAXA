@@ -1,8 +1,10 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import User from '../models/user.model.js';
 import Exercise from '../models/exercise.model.js';
 import Mood from '../models/mood.model.js';
+import ChatConversation from '../models/chatConversation.model.js';
 import { ADMIN_BOOTSTRAP } from '../constants/admin.constants.js';
 import { USER_MOOD_OPTIONS } from '../constants/moods.constants.js';
 
@@ -149,6 +151,61 @@ const forgotAdminPassword = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to restore admin credentials.',
+      error: error.message,
+    });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!mongoose.isValidObjectId(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user id.',
+      });
+    }
+
+    if (req.user.userId === userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot delete your own admin account.',
+      });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found.',
+      });
+    }
+
+    if (user.role === 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin accounts cannot be deleted.',
+      });
+    }
+
+    await Promise.all([
+      Mood.deleteMany({ userId: user._id }),
+      ChatConversation.deleteMany({ userId: user._id }),
+    ]);
+
+    await User.findByIdAndDelete(user._id);
+
+    return res.status(200).json({
+      success: true,
+      message: 'User and related wellness data deleted successfully.',
+      data: { id: user._id },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete user.',
       error: error.message,
     });
   }
@@ -328,4 +385,12 @@ const getActivityMix = async (req, res) => {
   }
 };
 
-export { adminLogin, forgotAdminPassword, getAllUsers, manageExercises, getAnalyticsSummary, getActivityMix };
+export {
+  adminLogin,
+  forgotAdminPassword,
+  getAllUsers,
+  deleteUser,
+  manageExercises,
+  getAnalyticsSummary,
+  getActivityMix,
+};

@@ -368,6 +368,43 @@
   cursor: pointer;
 }
 
+.action-muted {
+  font-size: 12px;
+  color: #a09c99;
+  font-weight: 600;
+}
+
+.table-danger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(179, 38, 30, 0.2);
+  background: rgba(179, 38, 30, 0.08);
+  color: #b3261e;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.table-danger-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.table-danger-btn .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.admin-inline-success {
+  margin: 0;
+  padding: 12px 26px 0;
+  color: #0c5252;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .table-footer {
   padding: 12px 26px;
   border-top: 1px solid #ecefef;

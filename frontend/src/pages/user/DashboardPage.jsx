@@ -232,23 +232,6 @@ function DashboardPage() {
             Chat with AI Psychologist
             <span className="material-symbols-outlined">bolt</span>
           </button>
-          <div className="chat-live">
-            <div className="chat-live-avatars">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuACwpij8gk-hFTCKst6RJuJnQMNEmlEd9VpDDuj_YfDffqeZCRx4W_lfaleJw-n1xHd2h0yCpCE1a5axUcUn6T7pBtg4tW7wXawA2SIVBJGsLJG-zKn4DA_tKZzgRVlLZcSIxUXhjzwgB2bnuPHzNQ-PZlSEK9SwhG0Ufk8Sy_FAQ76j8PsvOjEvu38Qpelocm3I_OuzzT0Syhq464nu6sJfxt6lAewRxYZigteyR1gpNNfOt2DUnS5xp767hJSt9AEOTLhuHbmk079"
-                alt="Active user one"
-              />
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAeRegHvIrWg1LcgckQw9p0yOAgknzrwyhXgQSFWzZPTI6O4_Up29Tj5OGHTkoWxVQrCO0Z89uTnVZ3ht_a2GhdDnZWVxqFhNN1Qx7ps9opGxFk9UKuf3UowK4M1E-cIKL_73nzzaACMmGqyukT3gDAf4Pnu38WhKPxM75D_PZKRhL67N2iAtc1Z8VyY96Bac7XKV1pGwU1DnFZ2q5a-C7Rrh8Vk35MnLEF9P814peQ1jwOoLbSpwh3WdGNf-drx-i905VsDuo9RsM1"
-                alt="Active user two"
-              />
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_XeRasAi97FMVdRwfcaKStupMOzabUBxaLdzajL82D-creoOwFlh8DygAQOt0LuJqJ8vB5y1GLrlKDCAT-PjP6yHnBkEip34y-oSMeoI96y3HPrNnymmhp2okF3uuESRryjPeNuCtDH6DXFCTTcdfRqP5zJlpp4dZzxuFn3ase0Lefmx8u7mLgUf1VbLUiG2M1cjTrMykpTB6hQXpBvuBFhsROMv9WYO2KqS_Yrl4aWxa0uDLKkrNda_0kNWVa4fJlpBT-3eYcER5"
-                alt="Active user three"
-              />
-            </div>
-            <p>1.2k people chatting now</p>
-          </div>
         </section>
       </main>
 

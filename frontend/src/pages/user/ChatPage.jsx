@@ -211,15 +211,6 @@ function ChatPage() {
               <p className="chat-history-state">No saved chats yet.</p>
             )}
           </div>
-
-          <div className="chat-breath-widget">
-            <p>WELLNESS NOTE</p>
-            <h4>AI chat is here when you want to talk instead of doing exercises.</h4>
-            <button type="button" onClick={handleStartNewChat}>
-              <span className="material-symbols-outlined">forum</span>
-              Start Talking
-            </button>
-          </div>
         </aside>
 
         <main className="chat-main">

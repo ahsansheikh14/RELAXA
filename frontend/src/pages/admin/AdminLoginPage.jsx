@@ -25,6 +25,13 @@ function AdminLoginPage() {
     setCredentials((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleFormSubmit = (event) => {
+    event.preventDefault();
+    if (!isSubmitting) {
+      handleAdminLogin();
+    }
+  };
+
   const handleAdminLogin = async () => {
     setErrorMessage('');
     setInfoMessage('');
@@ -86,7 +93,7 @@ function AdminLoginPage() {
             <p>Secure access for system administrators only.</p>
           </header>
 
-          <form className="admin-login-form">
+          <form className="admin-login-form" onSubmit={handleFormSubmit}>
             <div className="field-group">
               <label htmlFor="admin-email">Admin Email</label>
               <div className="field-wrap">
@@ -125,7 +132,7 @@ function AdminLoginPage() {
             {errorMessage && <p className="admin-auth-error">{errorMessage}</p>}
             {infoMessage && <p className="admin-auth-info">{infoMessage}</p>}
 
-            <button className="admin-login-submit" type="button" onClick={handleAdminLogin} disabled={isSubmitting}>
+            <button className="admin-login-submit" type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Please wait...' : 'Login to Dashboard'}
               <span className="material-symbols-outlined">arrow_forward</span>
             </button>
