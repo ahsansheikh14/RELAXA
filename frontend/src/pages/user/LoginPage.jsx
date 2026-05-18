@@ -123,8 +123,7 @@ function LoginPage() {
 
       if (result.resetLink) {
         setInfoMessage(
-          result.message ||
-            'Your email is registered. Click the button below to reset your password (valid 15 minutes).'
+          'Use the secure reset link below to set a new password (valid 15 minutes).'
         );
         setResetLink(result.resetLink);
       } else {

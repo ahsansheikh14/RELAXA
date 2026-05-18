@@ -139,14 +139,15 @@ const forgotPassword = async (req, res, next) => {
     await user.save();
 
     const resetLink = buildResetLink(normalizedEmail, rawToken);
-    const allowOnScreenLink =
-      process.env.ALLOW_RESET_LINK_FALLBACK === 'true' || !isEmailConfigured();
+    const onScreenResetMessage =
+      'Use the secure reset link below to set a new password (valid 15 minutes).';
 
     if (!isEmailConfigured()) {
       return res.status(200).json({
-        message: 'Email is not configured on the server. Use the reset link below (valid 15 minutes).',
+        message: onScreenResetMessage,
         emailExists: true,
         resetLink,
+        delivery: 'link',
       });
     }
 
@@ -156,21 +157,17 @@ const forgotPassword = async (req, res, next) => {
       return res.status(200).json({
         message: 'Password reset link has been sent to your registered email.',
         emailExists: true,
+        delivery: 'email',
       });
     } catch (mailError) {
-      const mailHint = mailError?.message || 'Email delivery failed';
+      // eslint-disable-next-line no-console
+      console.error('Password reset email failed:', mailError?.message || mailError);
 
-      if (allowOnScreenLink) {
-        return res.status(200).json({
-          message: `Email could not be sent (${mailHint}). Use the reset link below (valid 15 minutes).`,
-          emailExists: true,
-          resetLink,
-        });
-      }
-
-      return res.status(503).json({
-        message: 'Could not send reset email. Try again later or contact support.',
+      return res.status(200).json({
+        message: onScreenResetMessage,
         emailExists: true,
+        resetLink,
+        delivery: 'link',
       });
     }
   } catch (err) {

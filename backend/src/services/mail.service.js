@@ -1,9 +1,30 @@
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 
+const PLACEHOLDER_FRAGMENTS = ['replace_with', 'your_', 'xxx', 'paste_', 'example', 'test_key', 'api_key_here'];
+
 const isEnvValueSet = (value = '') => {
   const normalized = String(value).trim();
-  return Boolean(normalized) && !normalized.toLowerCase().includes('replace_with');
+  if (!normalized) {
+    return false;
+  }
+
+  const lower = normalized.toLowerCase();
+  return !PLACEHOLDER_FRAGMENTS.some((fragment) => lower.includes(fragment));
+};
+
+/** Resend keys start with re_ and are long; skip invalid/placeholder keys on Render. */
+const isResendKeyValid = () => {
+  const key = String(process.env.RESEND_API_KEY || '').trim();
+  if (!isEnvValueSet(key)) {
+    return false;
+  }
+
+  if (!/^re_[A-Za-z0-9_]{10,}$/.test(key)) {
+    return false;
+  }
+
+  return true;
 };
 
 const normalizeSmtpPassword = (password = '') => String(password).replace(/\s+/g, '');
@@ -90,11 +111,10 @@ const sendViaSmtp = async ({ to, resetLink }) => {
   return { provider: 'smtp' };
 };
 
-const isEmailConfigured = () =>
-  isEnvValueSet(process.env.RESEND_API_KEY) || Boolean(getSmtpTransporter());
+const isEmailConfigured = () => isResendKeyValid() || Boolean(getSmtpTransporter());
 
 const sendPasswordResetEmail = async ({ to, resetLink }) => {
-  if (isEnvValueSet(process.env.RESEND_API_KEY)) {
+  if (isResendKeyValid()) {
     return sendViaResend({ to, resetLink });
   }
 
@@ -105,4 +125,4 @@ const sendPasswordResetEmail = async ({ to, resetLink }) => {
   throw new Error('No email provider configured. Add RESEND_API_KEY or SMTP settings.');
 };
 
-export { sendPasswordResetEmail, isEmailConfigured };
+export { sendPasswordResetEmail, isEmailConfigured, isResendKeyValid };
