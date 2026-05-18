@@ -146,6 +146,32 @@ export const userApi = {
     }),
 };
 
+export const authApi = {
+  forgotPassword: async ({ email }) => {
+    const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: buildHeaders(),
+      body: JSON.stringify({ email }),
+    });
+
+    let payload;
+    try {
+      payload = await response.json();
+    } catch {
+      payload = { message: 'Invalid JSON response from server.' };
+    }
+
+    return { ok: response.ok, status: response.status, ...payload };
+  },
+
+  resetPassword: ({ email, token, newPassword }) =>
+    request('/auth/reset-password', {
+      method: 'POST',
+      headers: buildHeaders(),
+      body: JSON.stringify({ email, token, newPassword }),
+    }),
+};
+
 export const moodApi = {
   create: ({ token, data }) =>
     request('/moods', {

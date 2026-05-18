@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { API_BASE_URL } from '../../utils/auth.js';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { authApi } from '../../services/relaxaApi.js';
 import './ResetPasswordPage.css';
 
 function ResetPasswordPage() {
@@ -8,19 +8,26 @@ function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const token = searchParams.get('token') || '';
   const email = searchParams.get('email') || '';
+  const hasValidLink = Boolean(email && token);
 
-  const handleResetPassword = async () => {
+  const handleFormSubmit = async (event) => {
+    event.preventDefault();
+    if (isSubmitting) {
+      return;
+    }
+
     setErrorMessage('');
     setInfoMessage('');
 
-    if (!email || !token) {
-      setErrorMessage('Invalid reset link. Request a new one from Login page.');
+    if (!hasValidLink) {
+      setErrorMessage('Invalid reset link. Request a new one from the login page.');
       return;
     }
     if (newPassword.length < 6) {
@@ -34,19 +41,15 @@ function ResetPasswordPage() {
 
     try {
       setIsSubmitting(true);
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, token, newPassword }),
+      await authApi.resetPassword({
+        email: email.trim().toLowerCase(),
+        token,
+        newPassword,
       });
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.message || 'Unable to reset password.');
-      }
       setInfoMessage('Password reset complete. Redirecting to login...');
-      setTimeout(() => navigate('/login'), 1200);
+      setTimeout(() => navigate('/login'), 1500);
     } catch (error) {
-      setErrorMessage(error.message);
+      setErrorMessage(error.message === 'Failed to fetch' ? 'Backend is not reachable.' : error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -54,34 +57,77 @@ function ResetPasswordPage() {
 
   return (
     <section className="reset-password-page">
+      <div className="reset-bg-orb top" />
+      <div className="reset-bg-orb bottom" />
+
       <div className="reset-card">
-        <h1>Reset Your Password</h1>
-        <p>{email || 'Secure password reset'}</p>
+        <header className="reset-header">
+          <h1 className="reset-brand">Relaxa</h1>
+          <h2>Reset your password</h2>
+          {email ? <p className="reset-email">{decodeURIComponent(email)}</p> : <p>Set a new password for your account</p>}
+        </header>
 
-        <label htmlFor="newPassword">New Password</label>
-        <input
-          id="newPassword"
-          type="password"
-          value={newPassword}
-          onChange={(event) => setNewPassword(event.target.value)}
-          placeholder="Enter new password"
-        />
+        {!hasValidLink ? (
+          <div className="reset-invalid">
+            <p className="reset-error">This reset link is invalid or incomplete.</p>
+            <Link className="reset-back-link" to="/login">
+              Back to login
+            </Link>
+          </div>
+        ) : (
+          <form className="reset-form" onSubmit={handleFormSubmit}>
+            <div className="reset-field">
+              <label htmlFor="newPassword">New password</label>
+              <div className="reset-input-wrap">
+                <span className="material-symbols-outlined">lock</span>
+                <input
+                  id="newPassword"
+                  type={showPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                  placeholder="At least 6 characters"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="reset-toggle-password"
+                  aria-label="Toggle password visibility"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  <span className="material-symbols-outlined">
+                    {showPassword ? 'visibility_off' : 'visibility'}
+                  </span>
+                </button>
+              </div>
+            </div>
 
-        <label htmlFor="confirmPassword">Confirm Password</label>
-        <input
-          id="confirmPassword"
-          type="password"
-          value={confirmPassword}
-          onChange={(event) => setConfirmPassword(event.target.value)}
-          placeholder="Confirm new password"
-        />
+            <div className="reset-field">
+              <label htmlFor="confirmPassword">Confirm password</label>
+              <div className="reset-input-wrap">
+                <span className="material-symbols-outlined">lock</span>
+                <input
+                  id="confirmPassword"
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  placeholder="Re-enter new password"
+                  autoComplete="new-password"
+                />
+              </div>
+            </div>
 
-        {errorMessage && <p className="reset-error">{errorMessage}</p>}
-        {infoMessage && <p className="reset-info">{infoMessage}</p>}
+            {errorMessage && <p className="reset-error">{errorMessage}</p>}
+            {infoMessage && <p className="reset-info">{infoMessage}</p>}
 
-        <button type="button" onClick={handleResetPassword} disabled={isSubmitting}>
-          {isSubmitting ? 'Resetting...' : 'Reset Password'}
-        </button>
+            <button className="reset-submit" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Resetting...' : 'Update password'}
+            </button>
+          </form>
+        )}
+
+        <footer className="reset-footer">
+          <Link to="/login">← Back to login</Link>
+        </footer>
       </div>
     </section>
   );

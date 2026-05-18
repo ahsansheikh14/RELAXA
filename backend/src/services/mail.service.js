@@ -90,6 +90,9 @@ const sendViaSmtp = async ({ to, resetLink }) => {
   return { provider: 'smtp' };
 };
 
+const isEmailConfigured = () =>
+  isEnvValueSet(process.env.RESEND_API_KEY) || Boolean(getSmtpTransporter());
+
 const sendPasswordResetEmail = async ({ to, resetLink }) => {
   if (isEnvValueSet(process.env.RESEND_API_KEY)) {
     return sendViaResend({ to, resetLink });
@@ -102,4 +105,4 @@ const sendPasswordResetEmail = async ({ to, resetLink }) => {
   throw new Error('No email provider configured. Add RESEND_API_KEY or SMTP settings.');
 };
 
-export { sendPasswordResetEmail };
+export { sendPasswordResetEmail, isEmailConfigured };

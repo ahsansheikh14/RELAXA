@@ -1,7 +1,9 @@
 import './LoginPage.css';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { authApi } from '../../services/relaxaApi.js';
 import { API_BASE_URL, setUserToken } from '../../utils/auth.js';
+import { toResetPasswordPath } from '../../utils/resetLink.js';
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -16,6 +18,7 @@ function LoginPage() {
   const [infoMessage, setInfoMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [resetLink, setResetLink] = useState('');
+  const [isForgotSubmitting, setIsForgotSubmitting] = useState(false);
 
   const resetAuthForm = () => {
     setFormData({ name: '', email: '', password: '' });
@@ -104,22 +107,17 @@ function LoginPage() {
       return;
     }
 
-    setIsSubmitting(true);
+    setIsForgotSubmitting(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const result = await response.json();
+      const result = await authApi.forgotPassword({ email: email.trim().toLowerCase() });
 
-      if (response.status === 404 || result.emailExists === false) {
+      if (result.status === 404 || result.emailExists === false) {
         setErrorMessage(result.message || 'This email is not registered. Please sign up first.');
         return;
       }
 
-      if (!response.ok) {
+      if (!result.ok) {
         throw new Error(result.message || 'Unable to process forgot password.');
       }
 
@@ -136,7 +134,7 @@ function LoginPage() {
     } catch (error) {
       setErrorMessage(error.message === 'Failed to fetch' ? 'Backend is not reachable. Start the backend server first.' : error.message);
     } finally {
-      setIsSubmitting(false);
+      setIsForgotSubmitting(false);
     }
   };
 
@@ -214,8 +212,13 @@ function LoginPage() {
                 <label className="form-label" htmlFor="password">
                   Password
                 </label>
-                <button className="forgot-link" type="button" onClick={handleForgotPassword}>
-                  Forgot?
+                <button
+                  className="forgot-link"
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={isForgotSubmitting || isSubmitting}
+                >
+                  {isForgotSubmitting ? 'Sending...' : 'Forgot?'}
                 </button>
               </div>
               <div className="input-wrap">
@@ -245,9 +248,9 @@ function LoginPage() {
             {errorMessage && <p className="auth-error">{errorMessage}</p>}
             {infoMessage && <p className="auth-info">{infoMessage}</p>}
             {resetLink && (
-              <a className="auth-reset-link" href={resetLink}>
+              <Link className="auth-reset-link" to={toResetPasswordPath(resetLink)}>
                 Reset password now
-              </a>
+              </Link>
             )}
 
             <button className="submit-btn" type="submit" disabled={isSubmitting}>

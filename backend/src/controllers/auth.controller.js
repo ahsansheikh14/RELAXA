@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
-import { sendPasswordResetEmail } from '../services/mail.service.js';
+import { isEmailConfigured, sendPasswordResetEmail } from '../services/mail.service.js';
 
 const JWT_EXPIRES_IN = '7d';
 
@@ -139,6 +139,16 @@ const forgotPassword = async (req, res, next) => {
     await user.save();
 
     const resetLink = buildResetLink(normalizedEmail, rawToken);
+    const allowOnScreenLink =
+      process.env.ALLOW_RESET_LINK_FALLBACK === 'true' || !isEmailConfigured();
+
+    if (!isEmailConfigured()) {
+      return res.status(200).json({
+        message: 'Email is not configured on the server. Use the reset link below (valid 15 minutes).',
+        emailExists: true,
+        resetLink,
+      });
+    }
 
     try {
       await sendPasswordResetEmail({ to: normalizedEmail, resetLink });
@@ -149,7 +159,6 @@ const forgotPassword = async (req, res, next) => {
       });
     } catch (mailError) {
       const mailHint = mailError?.message || 'Email delivery failed';
-      const allowOnScreenLink = process.env.NODE_ENV !== 'production' || process.env.ALLOW_RESET_LINK_FALLBACK === 'true';
 
       if (allowOnScreenLink) {
         return res.status(200).json({
