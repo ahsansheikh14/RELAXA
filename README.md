@@ -2,6 +2,13 @@
 
 Relaxa is a mental wellness web app that helps people track mood, get gentle support, and discover wellness exercises.
 
+Made by:
+- Sheikh Ahsan (093) — Frontend
+- Asim Ali (015) — Backend (User, Auth, Mood)
+- Waleed Ahmed (093) — Backend (Admin, Exercise, Reports)
+
+The project has two parts:
+
 The project has two parts:
 - `backend/` — Node.js + Express API with MongoDB data storage
 - `frontend/` — React + Vite web app for users and admins
