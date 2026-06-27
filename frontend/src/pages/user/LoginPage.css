@@ -389,6 +389,42 @@
   .login-card {
     padding: 20px;
   }
+
+  .login-main {
+    gap: 20px;
+  }
+
+  .brand {
+    font-size: 40px;
+  }
+}
+
+@media (max-width: 600px) {
+  .login-page {
+    padding: 16px 12px 20px;
+    justify-content: flex-start;
+  }
+
+  .login-content {
+    max-width: 100%;
+  }
+
+  .reflection {
+    display: none;
+  }
+
+  .login-footer {
+    max-width: 100%;
+  }
+
+  .terms {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .auth-tabs .tab {
+    font-size: 14px;
+  }
 }
 
 @media (min-width: 900px) {

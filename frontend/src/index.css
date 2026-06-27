@@ -12,6 +12,12 @@ body {
   background: #f8fbfb;
   color: #234041;
   transition: background-color 0.2s ease, color 0.2s ease, filter 0.2s ease;
+  overflow-x: hidden;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
 }
 
 #root {

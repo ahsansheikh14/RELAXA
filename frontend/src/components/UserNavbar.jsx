@@ -129,6 +129,7 @@ function UserNavbar() {
   });
   const [settingsMessage, setSettingsMessage] = useState('');
   const [settingsError, setSettingsError] = useState('');
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const getToken = () => localStorage.getItem('relaxaToken');
 
@@ -185,6 +186,7 @@ function UserNavbar() {
     setMenuOpen(false);
     setSettingsOpen(false);
     setNotificationsOpen(false);
+    setMobileNavOpen(false);
   };
 
   const handleLogout = () => {
@@ -280,7 +282,7 @@ function UserNavbar() {
   const unreadCount = notifications.filter((item) => item.unread).length;
 
   useEffect(() => {
-    if (!notificationsOpen && !menuOpen) {
+    if (!notificationsOpen && !menuOpen && !mobileNavOpen) {
       return undefined;
     }
 
@@ -292,24 +294,58 @@ function UserNavbar() {
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [notificationsOpen, menuOpen]);
+  }, [notificationsOpen, menuOpen, mobileNavOpen]);
 
   return (
     <header className="user-navbar">
       <div className="user-navbar__left">
-        <Link to="/dashboard" className="user-navbar__brand">
+        <button
+          type="button"
+          className="user-navbar__menu-btn"
+          aria-label="Open navigation menu"
+          aria-expanded={mobileNavOpen}
+          onClick={() => {
+            setNotificationsOpen(false);
+            setSettingsOpen(false);
+            setMenuOpen(false);
+            setMobileNavOpen((prev) => !prev);
+          }}
+        >
+          <span className="material-symbols-outlined">{mobileNavOpen ? 'close' : 'menu'}</span>
+        </button>
+
+        <Link to="/dashboard" className="user-navbar__brand" onClick={() => setMobileNavOpen(false)}>
           Relaxa
         </Link>
 
-        <nav className="user-navbar__links">
-          <NavLink to="/dashboard" className={({ isActive }) => `user-navbar__link ${isActive ? 'active' : ''}`}>
+        <nav className={`user-navbar__links ${mobileNavOpen ? 'is-open' : ''}`}>
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) => `user-navbar__link ${isActive ? 'active' : ''}`}
+            onClick={() => setMobileNavOpen(false)}
+          >
             Dashboard
           </NavLink>
-          <NavLink to="/exercises" className={({ isActive }) => `user-navbar__link ${isActive ? 'active' : ''}`}>
+          <NavLink
+            to="/exercises"
+            className={({ isActive }) => `user-navbar__link ${isActive ? 'active' : ''}`}
+            onClick={() => setMobileNavOpen(false)}
+          >
             Exercises
           </NavLink>
-          <NavLink to="/reports" className={({ isActive }) => `user-navbar__link ${isActive ? 'active' : ''}`}>
+          <NavLink
+            to="/reports"
+            className={({ isActive }) => `user-navbar__link ${isActive ? 'active' : ''}`}
+            onClick={() => setMobileNavOpen(false)}
+          >
             Reports
+          </NavLink>
+          <NavLink
+            to="/chat"
+            className={({ isActive }) => `user-navbar__link ${isActive ? 'active' : ''}`}
+            onClick={() => setMobileNavOpen(false)}
+          >
+            AI Chat
           </NavLink>
         </nav>
       </div>
@@ -417,7 +453,7 @@ function UserNavbar() {
         </div>
       </div>
 
-      {(notificationsOpen || menuOpen) && (
+      {(notificationsOpen || menuOpen || mobileNavOpen) && (
         <button type="button" className="navbar-dismiss-overlay" aria-label="Close menu" onClick={closeAllPanels} />
       )}
 

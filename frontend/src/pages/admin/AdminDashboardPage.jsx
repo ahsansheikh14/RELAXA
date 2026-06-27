@@ -1,5 +1,5 @@
 import './AdminDashboardPage.css';
-import AdminSidebar from '../../components/AdminSidebar';
+import AdminLayout from '../../components/AdminLayout';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { adminApi } from '../../services/relaxaApi.js';
@@ -72,9 +72,7 @@ function AdminDashboardPage() {
   };
 
   return (
-    <div className="admin-dashboard">
-      <AdminSidebar />
-
+    <AdminLayout layoutClass="admin-dashboard">
       <main className="admin-main">
         <header className="admin-main-head">
           <div>
@@ -251,7 +249,7 @@ function AdminDashboardPage() {
           </div>
         </section>
       </main>
-    </div>
+    </AdminLayout>
   );
 }
 

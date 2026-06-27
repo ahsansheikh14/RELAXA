@@ -1,4 +1,4 @@
-import AdminSidebar from '../../components/AdminSidebar';
+import AdminLayout from '../../components/AdminLayout';
 import './AdminSectionPage.css';
 import { useEffect, useState } from 'react';
 import { adminApi } from '../../services/relaxaApi.js';
@@ -38,8 +38,7 @@ function AdminAnalyticsPage() {
   }, [adminToken]);
 
   return (
-    <div className="admin-section-layout">
-      <AdminSidebar />
+    <AdminLayout layoutClass="admin-section-layout">
       <main className="admin-section-main">
         <h2>Analytics</h2>
         <p>Track platform metrics, engagement trends, and exercise distribution in one place.</p>
@@ -116,7 +115,7 @@ function AdminAnalyticsPage() {
           </article>
         </section>
       </main>
-    </div>
+    </AdminLayout>
   );
 }
 

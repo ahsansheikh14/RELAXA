@@ -33,6 +33,7 @@ function ChatPage() {
   const [isConversationLoading, setIsConversationLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [chatLimitReached, setChatLimitReached] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const starterPrompts = useMemo(() => STARTER_PROMPTS, []);
 
@@ -48,6 +49,7 @@ function ChatPage() {
         const response = await aiApi.getConversation({ token, conversationId });
         setActiveConversationId(response.conversation.id);
         setMessages(response.conversation.messages || []);
+        setHistoryOpen(false);
         setChatLimitReached(
           response.conversation.messages?.some((message) =>
             String(message.content || '').includes('Relaxa AI chat limit has been reached')
@@ -168,7 +170,16 @@ function ChatPage() {
       <UserNavbar />
 
       <div className="chat-layout">
-        <aside className="chat-sidenav">
+        {historyOpen ? (
+          <button
+            type="button"
+            className="chat-history-backdrop"
+            aria-label="Close chat history"
+            onClick={() => setHistoryOpen(false)}
+          />
+        ) : null}
+
+        <aside className={`chat-sidenav ${historyOpen ? 'chat-sidenav--open' : ''}`}>
           <div className="chat-sidenav-head">
             <div className="assistant-icon">
               <span className="material-symbols-outlined">auto_awesome</span>
@@ -182,7 +193,10 @@ function ChatPage() {
           <button
             type="button"
             className={`chat-side-btn ${!activeConversationId ? 'active' : ''}`}
-            onClick={handleStartNewChat}
+            onClick={() => {
+              handleStartNewChat();
+              setHistoryOpen(false);
+            }}
           >
             <span className="material-symbols-outlined">add_comment</span>
             New Chat
@@ -200,7 +214,10 @@ function ChatPage() {
                     key={conversation.id}
                     type="button"
                     className={`chat-history-item ${conversation.id === activeConversationId ? 'active' : ''}`}
-                    onClick={() => loadConversation(conversation.id)}
+                    onClick={() => {
+                      loadConversation(conversation.id);
+                      setHistoryOpen(false);
+                    }}
                   >
                     <strong>{conversation.title}</strong>
                     <span>{conversation.lastMessagePreview || 'Open this conversation'}</span>
@@ -214,6 +231,14 @@ function ChatPage() {
         </aside>
 
         <main className="chat-main">
+          <div className="chat-mobile-toolbar">
+            <button type="button" className="chat-history-toggle" onClick={() => setHistoryOpen(true)}>
+              <span className="material-symbols-outlined">history</span>
+              History
+            </button>
+            <span className="chat-mobile-title">Relaxa AI</span>
+          </div>
+
           <div className="chat-scroll">
             {!messages.length && !isConversationLoading ? (
               <>

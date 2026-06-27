@@ -1,73 +1,7 @@
 .admin-dashboard {
   min-height: 100vh;
-  display: flex;
   background: #fbf9f8;
   color: #1b1c1c;
-}
-
-.admin-sidebar {
-  width: 288px;
-  border-right: 1px solid #ecefef;
-  background: #faf9f8;
-  padding: 24px 16px;
-  display: flex;
-  flex-direction: column;
-}
-
-.admin-sidebar-head {
-  padding: 0 10px;
-  margin-bottom: 28px;
-}
-
-.admin-sidebar-head h1 {
-  margin: 0;
-  font-size: 24px;
-  font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
-  color: #0c5252;
-}
-
-.admin-sidebar-head p {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: #707978;
-}
-
-.admin-nav {
-  display: grid;
-  gap: 4px;
-}
-
-.admin-nav-item {
-  border: none;
-  background: transparent;
-  padding: 12px 14px;
-  border-radius: 0;
-  border-right: 4px solid transparent;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #a09c99;
-  cursor: pointer;
-  text-align: left;
-}
-
-.admin-nav-item.active {
-  color: #0c5252;
-  background: rgba(201, 230, 215, 0.35);
-  border-right-color: #0c5252;
-}
-
-.admin-logout {
-  margin-top: auto;
-  border: none;
-  background: transparent;
-  border-top: 1px solid #ecefef;
-  padding: 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #a09c99;
-  cursor: pointer;
 }
 
 .admin-main {
@@ -460,4 +394,71 @@
 .admin-table-empty {
   text-align: center;
   color: #707978;
+}
+
+@media (max-width: 1023px) {
+  .admin-main {
+    padding: 20px 16px 32px;
+    overflow-x: hidden;
+  }
+
+  .admin-main-head {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 24px;
+  }
+
+  .admin-main-head h2 {
+    font-size: 28px;
+  }
+
+  .add-exercise-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .admin-stat-card h3 {
+    font-size: 36px;
+  }
+
+  .table-head {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+  }
+
+  .table-head h3 {
+    font-size: 22px;
+  }
+
+  .table-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-box input {
+    width: 100%;
+  }
+
+  .table-wrap th,
+  .table-wrap td {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
+  .table-footer {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-cell small {
+    display: none;
+  }
 }

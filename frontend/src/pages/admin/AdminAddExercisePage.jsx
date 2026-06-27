@@ -1,4 +1,4 @@
-import AdminSidebar from '../../components/AdminSidebar';
+import AdminLayout from '../../components/AdminLayout';
 import './AdminSectionPage.css';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -97,8 +97,7 @@ function AdminAddExercisePage() {
   };
 
   return (
-    <div className="admin-section-layout">
-      <AdminSidebar />
+    <AdminLayout layoutClass="admin-section-layout">
       <main className="admin-section-main">
         <h2>{isEditMode ? 'Edit Exercise' : 'Add Exercise'}</h2>
         <p>Create guided sessions with optional links or videos for users.</p>
@@ -191,7 +190,7 @@ function AdminAddExercisePage() {
           )}
         </section>
       </main>
-    </div>
+    </AdminLayout>
   );
 }
 

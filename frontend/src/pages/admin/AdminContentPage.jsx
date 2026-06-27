@@ -1,4 +1,4 @@
-import AdminSidebar from '../../components/AdminSidebar';
+import AdminLayout from '../../components/AdminLayout';
 import './AdminSectionPage.css';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -50,8 +50,7 @@ function AdminContentPage() {
   };
 
   return (
-    <div className="admin-section-layout">
-      <AdminSidebar />
+    <AdminLayout layoutClass="admin-section-layout">
       <main className="admin-section-main">
         <div className="admin-page-head">
           <div>
@@ -129,7 +128,7 @@ function AdminContentPage() {
           )}
         </section>
       </main>
-    </div>
+    </AdminLayout>
   );
 }
 

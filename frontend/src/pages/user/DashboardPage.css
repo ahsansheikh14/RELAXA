@@ -460,3 +460,16 @@
     font-size: 16px;
   }
 }
+
+@media (max-width: 480px) {
+  .mood-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .zen-floating-btn {
+    right: 12px;
+    bottom: 12px;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+}

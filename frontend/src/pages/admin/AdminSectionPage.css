@@ -1,6 +1,5 @@
 .admin-section-layout {
   min-height: 100vh;
-  display: flex;
   background: #fbf9f8;
 }
 
@@ -333,6 +332,37 @@
 
 .admin-section-info {
   color: #0c5252;
+}
+
+@media (max-width: 1023px) {
+  .admin-section-main {
+    padding: 20px 16px 32px;
+    overflow-x: hidden;
+  }
+
+  .admin-section-main h2 {
+    font-size: 28px;
+  }
+
+  .admin-page-head,
+  .admin-toolbar,
+  .exercise-form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-search-box {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .exercise-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-card-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {
